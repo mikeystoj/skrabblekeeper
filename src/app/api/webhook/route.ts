@@ -7,6 +7,8 @@ import Stripe from 'stripe';
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
 export async function POST(request: NextRequest) {
+  console.log('Webhook received');
+  
   if (!webhookSecret) {
     console.error('STRIPE_WEBHOOK_SECRET is not set');
     return NextResponse.json(
@@ -19,6 +21,7 @@ export async function POST(request: NextRequest) {
   const signature = request.headers.get('stripe-signature');
 
   if (!signature) {
+    console.error('No signature provided');
     return NextResponse.json(
       { error: 'No signature provided' },
       { status: 400 }
@@ -30,6 +33,7 @@ export async function POST(request: NextRequest) {
   try {
     const stripe = getStripe();
     event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
+    console.log('Webhook event verified:', event.type);
   } catch (error) {
     console.error('Webhook signature verification failed:', error);
     return NextResponse.json(
@@ -43,6 +47,7 @@ export async function POST(request: NextRequest) {
     const session = event.data.object as Stripe.Checkout.Session;
     
     const email = session.customer_email || session.metadata?.email;
+    console.log('Processing checkout for email:', email);
     
     if (!email) {
       console.error('No email found in session');
@@ -54,20 +59,35 @@ export async function POST(request: NextRequest) {
 
     // Generate license key
     const licenseKey = generateLicenseKey();
+    console.log('Generated license key:', licenseKey);
 
-    // Store in Vercel KV
-    await storeLicenseKey(licenseKey, {
-      email,
-      createdAt: new Date().toISOString(),
-      stripePaymentId: session.payment_intent as string,
-    });
+    // Store in Supabase
+    try {
+      await storeLicenseKey(licenseKey, {
+        email,
+        createdAt: new Date().toISOString(),
+        stripePaymentId: session.payment_intent as string,
+      });
+      console.log('License stored in Supabase successfully');
+    } catch (error) {
+      console.error('Failed to store license in Supabase:', error);
+      return NextResponse.json(
+        { error: 'Failed to store license' },
+        { status: 500 }
+      );
+    }
 
     // Send email with license key
-    const emailResult = await sendLicenseEmail(email, licenseKey);
-    
-    if (!emailResult.success) {
-      console.error('Failed to send license email:', emailResult.error);
-      // Don't fail the webhook - the license is still stored
+    try {
+      const emailResult = await sendLicenseEmail(email, licenseKey);
+      
+      if (!emailResult.success) {
+        console.error('Failed to send license email:', emailResult.error);
+      } else {
+        console.log('License email sent successfully');
+      }
+    } catch (error) {
+      console.error('Email sending threw error:', error);
     }
 
     console.log(`License key generated for ${email}: ${licenseKey}`);
@@ -75,4 +95,3 @@ export async function POST(request: NextRequest) {
 
   return NextResponse.json({ received: true });
 }
-
