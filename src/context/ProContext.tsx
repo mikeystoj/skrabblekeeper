@@ -10,6 +10,7 @@ export interface ProSettings {
   customLetters: Record<string, { value: number; count: number }>;
   timerEnabled: boolean;
   timerMinutes: number; // Default turn timer in minutes
+  savedPlayers: string[]; // List of saved player names for quick selection
 }
 
 export interface GameHistoryEntry {
@@ -48,6 +49,7 @@ const defaultSettings: ProSettings = {
   customLetters: {},
   timerEnabled: false,
   timerMinutes: 2, // Default 2 minutes per turn
+  savedPlayers: [], // Empty by default
 };
 
 const ProContext = createContext<ProContextType | undefined>(undefined);

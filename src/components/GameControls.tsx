@@ -4,7 +4,7 @@ import { useGame } from '@/context/GameContext';
 import { usePro } from '@/context/ProContext';
 import { calculateAllWordsScore } from '@/lib/scoring';
 import { ViewMode } from '@/lib/types';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect, useCallback } from 'react';
 
 interface GameControlsProps {
   viewMode: ViewMode;
@@ -20,8 +20,64 @@ export function GameControls({ viewMode, onViewModeChange }: GameControlsProps) 
   const [showEndGameModal, setShowEndGameModal] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [gameStartTime] = useState(() => Date.now());
+  
+  // Timer state
+  const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
+  const [isTimerRunning, setIsTimerRunning] = useState(false);
+  const [timerExpired, setTimerExpired] = useState(false);
 
   const currentPlayer = state.players.find(p => p.id === state.currentPlayerId);
+
+  // Reset timer when player changes
+  const resetTimer = useCallback(() => {
+    if (isPro && settings.timerEnabled && settings.timerMinutes > 0) {
+      setTimeRemaining(settings.timerMinutes * 60);
+      setIsTimerRunning(true);
+      setTimerExpired(false);
+    }
+  }, [isPro, settings.timerEnabled, settings.timerMinutes]);
+
+  // Start/reset timer when current player changes
+  useEffect(() => {
+    if (state.currentPlayerId && isPro && settings.timerEnabled) {
+      resetTimer();
+    }
+  }, [state.currentPlayerId, resetTimer, isPro, settings.timerEnabled]);
+
+  // Timer countdown effect
+  useEffect(() => {
+    if (!isTimerRunning || timeRemaining === null || timeRemaining <= 0) {
+      if (timeRemaining === 0 && !timerExpired) {
+        setTimerExpired(true);
+        setIsTimerRunning(false);
+      }
+      return;
+    }
+
+    const interval = setInterval(() => {
+      setTimeRemaining(prev => {
+        if (prev === null || prev <= 0) return 0;
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [isTimerRunning, timeRemaining, timerExpired]);
+
+  // Format time for display
+  const formatTime = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  // Get timer color based on remaining time
+  const getTimerColor = (): string => {
+    if (timeRemaining === null) return 'text-[#1e3a5f]';
+    if (timeRemaining <= 10) return 'text-red-500 animate-pulse';
+    if (timeRemaining <= 30) return 'text-orange-500';
+    return 'text-[#1e3a5f]';
+  };
   
   const scoringResult = useMemo(() => {
     return calculateAllWordsScore(state.pendingTiles, state.board);
@@ -87,6 +143,7 @@ export function GameControls({ viewMode, onViewModeChange }: GameControlsProps) 
         word: wordDisplay,
         score: scoringResult.totalScore,
       });
+      // Timer will reset automatically via useEffect when currentPlayerId changes
     }
   };
 
@@ -103,7 +160,14 @@ export function GameControls({ viewMode, onViewModeChange }: GameControlsProps) 
       const currentIndex = state.players.findIndex(p => p.id === state.currentPlayerId);
       const nextIndex = (currentIndex + 1) % state.players.length;
       dispatch({ type: 'SET_CURRENT_PLAYER', playerId: state.players[nextIndex].id });
+      // Timer will reset automatically via useEffect when currentPlayerId changes
     }
+  };
+
+  // Handle timer expiration - auto pass turn
+  const handleTimerExpired = () => {
+    setTimerExpired(false);
+    handlePass();
   };
 
   const handleEndGame = async (saveToHistory: boolean) => {
@@ -270,6 +334,31 @@ export function GameControls({ viewMode, onViewModeChange }: GameControlsProps) 
             <span className="text-[#1e3a5f]">Turn: <strong>{currentPlayer.name}</strong></span>
             <span className="text-[#1e3a5f]">Score: <strong>{currentPlayer.score}</strong></span>
           </div>
+          
+          {/* Timer Display */}
+          {isPro && settings.timerEnabled && timeRemaining !== null && (
+            <div className="mt-2 pt-2 border-t border-[#d4c4a8]">
+              <div className="flex items-center justify-center gap-2">
+                <span className="text-xs text-[#1e3a5f]/60">⏱️ Time:</span>
+                <span className={`text-2xl font-bold font-mono ${getTimerColor()}`}>
+                  {formatTime(timeRemaining)}
+                </span>
+              </div>
+              
+              {/* Timer Expired Warning */}
+              {timerExpired && (
+                <div className="mt-2 bg-red-100 border border-red-300 rounded-md p-2 text-center">
+                  <p className="text-red-600 text-sm font-medium">⏰ Time&apos;s up!</p>
+                  <button
+                    onClick={handleTimerExpired}
+                    className="mt-1 text-xs bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
+                  >
+                    Pass Turn
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 

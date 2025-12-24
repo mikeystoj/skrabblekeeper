@@ -23,10 +23,11 @@ export function ProModal({ isOpen, onClose }: ProModalProps) {
   const features = [
     'Dictionary validation with official Scrabble dictionaries',
     'Game history and personal stats tracking',
-    'Predictive word helper suggestions',
-    'Word lookup and point calculator',
+    'Predictive word helper suggestions (coming soon)',
+    'Saved player names for quick selection',
     'Multi-lingual support (EN, ES, FR, DE)',
     'Turn timer for competitive play',
+    'No future ads'
   ];
 
   const handlePurchase = async () => {

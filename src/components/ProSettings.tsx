@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { usePro } from '@/context/ProContext';
 
 // Language configurations with custom letter sets
@@ -63,8 +63,34 @@ export function ProSettings({ isOpen, onClose }: ProSettingsProps) {
   const { settings, updateSettings, isPro } = usePro();
   const [isSaving, setIsSaving] = useState(false);
   const [localSettings, setLocalSettings] = useState(settings);
+  const [newPlayerName, setNewPlayerName] = useState('');
+
+  // Sync localSettings when settings change or modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setLocalSettings(settings);
+    }
+  }, [isOpen, settings]);
 
   if (!isOpen) return null;
+
+  const handleAddPlayer = () => {
+    const trimmedName = newPlayerName.trim();
+    if (trimmedName && !localSettings.savedPlayers?.includes(trimmedName)) {
+      setLocalSettings({
+        ...localSettings,
+        savedPlayers: [...(localSettings.savedPlayers || []), trimmedName],
+      });
+      setNewPlayerName('');
+    }
+  };
+
+  const handleRemovePlayer = (name: string) => {
+    setLocalSettings({
+      ...localSettings,
+      savedPlayers: (localSettings.savedPlayers || []).filter(p => p !== name),
+    });
+  };
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -298,6 +324,60 @@ export function ProSettings({ isOpen, onClose }: ProSettingsProps) {
               </div>
             </div>
           )}
+
+          {/* Saved Players */}
+          <div>
+            <h3 className="font-medium text-[#1e3a5f] mb-2">Saved Players</h3>
+            <p className="text-sm text-[#1e3a5f]/60 mb-3">
+              Save player names for quick selection when starting new games.
+            </p>
+            
+            {/* Add new player */}
+            <div className="flex gap-2 mb-3">
+              <input
+                type="text"
+                value={newPlayerName}
+                onChange={(e) => setNewPlayerName(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleAddPlayer()}
+                placeholder="Player name..."
+                className="flex-1 px-3 py-2 rounded-lg border-2 border-[#e8dfd2] 
+                  focus:border-[#1e3a5f] focus:outline-none bg-white
+                  text-[#1e3a5f] placeholder-[#1e3a5f]/40 text-sm"
+                maxLength={20}
+              />
+              <button
+                onClick={handleAddPlayer}
+                disabled={!newPlayerName.trim()}
+                className="px-4 py-2 bg-[#1e3a5f] hover:bg-[#162d4d] 
+                  text-[#f5f0e8] font-medium rounded-lg transition-colors text-sm
+                  disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Add
+              </button>
+            </div>
+
+            {/* Saved players list */}
+            {(localSettings.savedPlayers?.length || 0) > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {localSettings.savedPlayers?.map((name) => (
+                  <div 
+                    key={name}
+                    className="flex items-center gap-2 px-3 py-1.5 bg-[#e8dfd2] rounded-lg"
+                  >
+                    <span className="text-sm text-[#1e3a5f]">{name}</span>
+                    <button
+                      onClick={() => handleRemovePlayer(name)}
+                      className="text-[#1e3a5f]/40 hover:text-red-500 transition-colors"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-[#1e3a5f]/40 italic">No saved players yet</p>
+            )}
+          </div>
         </div>
 
         {/* Footer */}

@@ -2,11 +2,18 @@
 
 import { useState } from 'react';
 import { useGame } from '@/context/GameContext';
+import { usePro } from '@/context/ProContext';
 import { MAX_PLAYERS } from '@/lib/constants';
 
 export function PlayerSetup() {
   const { state, dispatch } = useGame();
+  const { isPro, settings, updateSettings } = usePro();
   const [newPlayerName, setNewPlayerName] = useState('');
+
+  const savedPlayers = settings.savedPlayers || [];
+  const availableSavedPlayers = savedPlayers.filter(
+    name => !state.players.some(p => p.name === name)
+  );
 
   const handleAddPlayer = (e: React.FormEvent) => {
     e.preventDefault();
@@ -14,6 +21,19 @@ export function PlayerSetup() {
     if (name && state.players.length < MAX_PLAYERS) {
       dispatch({ type: 'ADD_PLAYER', name });
       setNewPlayerName('');
+      
+      // Auto-save new player names to settings if Pro
+      if (isPro && !savedPlayers.includes(name)) {
+        updateSettings({
+          savedPlayers: [...savedPlayers, name],
+        });
+      }
+    }
+  };
+
+  const handleAddSavedPlayer = (name: string) => {
+    if (state.players.length < MAX_PLAYERS) {
+      dispatch({ type: 'ADD_PLAYER', name });
     }
   };
 
@@ -33,6 +53,27 @@ export function PlayerSetup() {
         <h2 className="text-xl font-bold text-[#1e3a5f] mb-4 text-center">
           Add Players
         </h2>
+
+        {/* Saved Players Quick Add (Pro only) */}
+        {isPro && availableSavedPlayers.length > 0 && state.players.length < MAX_PLAYERS && (
+          <div className="mb-4">
+            <p className="text-xs text-[#1e3a5f]/60 mb-2">Quick add saved players:</p>
+            <div className="flex flex-wrap gap-2">
+              {availableSavedPlayers.map((name) => (
+                <button
+                  key={name}
+                  onClick={() => handleAddSavedPlayer(name)}
+                  className="px-3 py-1.5 bg-[#e8dfd2] hover:bg-[#d4c4a8] 
+                    text-[#1e3a5f] text-sm font-medium rounded-lg transition-colors
+                    flex items-center gap-1"
+                >
+                  <span>+</span>
+                  <span>{name}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Add Player Form */}
         <form onSubmit={handleAddPlayer} className="mb-4">
@@ -58,6 +99,7 @@ export function PlayerSetup() {
           </div>
           <p className="text-xs text-[#1e3a5f] mt-2 opacity-70">
             {state.players.length}/{MAX_PLAYERS} players
+            {isPro && <span className="ml-2">• New names auto-saved</span>}
           </p>
         </form>
 
