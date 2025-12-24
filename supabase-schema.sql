@@ -1,3 +1,29 @@
+-- Licenses table (if not already created)
+-- Stores Pro license keys
+CREATE TABLE IF NOT EXISTS licenses (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  license_key TEXT UNIQUE NOT NULL,
+  email TEXT NOT NULL,
+  stripe_payment_id TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Enable RLS for licenses
+ALTER TABLE licenses ENABLE ROW LEVEL SECURITY;
+
+-- Policies for licenses table
+-- Allow inserting new licenses (from webhook)
+CREATE POLICY "Allow insert licenses" ON licenses
+  FOR INSERT WITH CHECK (true);
+
+-- Allow selecting licenses for validation
+CREATE POLICY "Allow select licenses" ON licenses
+  FOR SELECT USING (true);
+
+-- Index for faster lookups
+CREATE INDEX IF NOT EXISTS idx_licenses_license_key ON licenses(license_key);
+CREATE INDEX IF NOT EXISTS idx_licenses_email ON licenses(email);
+
 -- Games history table
 -- Stores completed games for Pro users
 CREATE TABLE games (
