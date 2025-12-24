@@ -20,7 +20,7 @@ export async function sendLicenseEmail(
   try {
     const resend = getResend();
     await resend.emails.send({
-      from: 'Skrabble Keeper <noreply@skrabblekeeper.com>',
+      from: 'Skrabble Keeper <onboarding@resend.dev>',
       to: email,
       subject: 'Your Skrabble Keeper Pro License Key 🎉',
       html: `
