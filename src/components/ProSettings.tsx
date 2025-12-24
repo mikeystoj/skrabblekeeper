@@ -176,7 +176,7 @@ export function ProSettings({ isOpen, onClose }: ProSettingsProps) {
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="bg-[#1e3a5f] px-5 py-4 sticky top-0">
+        <div className="bg-[#1e3a5f] px-5 py-4 sticky top-0 z-10">
           <h2 className="text-lg font-bold text-[#f5f0e8]">Pro Settings</h2>
           <p className="text-[#f5f0e8]/70 text-sm">Customize your game experience</p>
         </div>
