@@ -184,6 +184,9 @@ export function calculateAllWordsScore(
   return { totalScore, words };
 }
 
+// Helper to check if a letter is a blank tile (lowercase = blank)
+const isBlankTile = (letter: string) => letter === letter.toLowerCase() && letter !== letter.toUpperCase();
+
 /**
  * Calculate score for a single word with context about which tiles are new
  * Multipliers only apply to newly placed tiles
@@ -195,7 +198,8 @@ function calculateWordScoreWithContext(
   let wordMultiplier = 1;
 
   for (const tile of tiles) {
-    const letterValue = LETTER_VALUES[tile.letter.toUpperCase()] || 0;
+    // Blank tiles (lowercase letters) are worth 0 points
+    const letterValue = isBlankTile(tile.letter) ? 0 : (LETTER_VALUES[tile.letter.toUpperCase()] || 0);
     
     // Only apply multipliers to newly placed tiles
     if (tile.isNew) {
@@ -239,7 +243,8 @@ export function calculateWordScore(tiles: PlacedTile[]): number {
   let wordMultiplier = 1;
 
   for (const tile of tiles) {
-    const letterValue = LETTER_VALUES[tile.letter.toUpperCase()] || 0;
+    // Blank tiles (lowercase letters) are worth 0 points
+    const letterValue = isBlankTile(tile.letter) ? 0 : (LETTER_VALUES[tile.letter.toUpperCase()] || 0);
     const multiplier = BOARD_LAYOUT[tile.row]?.[tile.col];
 
     switch (multiplier) {
@@ -290,7 +295,9 @@ export function getWordFromTiles(tiles: PlacedTile[]): string {
 
 /**
  * Get the point value for a single letter
+ * Blank tiles (lowercase letters) are worth 0 points
  */
 export function getLetterValue(letter: string): number {
+  if (isBlankTile(letter)) return 0;
   return LETTER_VALUES[letter.toUpperCase()] || 0;
 }

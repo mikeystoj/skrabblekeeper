@@ -3,6 +3,9 @@
 import { BOARD_LAYOUT, MULTIPLIER_COLORS, LETTER_VALUES } from '@/lib/constants';
 import { PlacedTile } from '@/lib/types';
 
+// Helper to check if a letter is a blank tile (lowercase = blank)
+const isBlankTile = (letter: string) => letter === letter.toLowerCase() && letter !== letter.toUpperCase();
+
 interface BoardSquareProps {
   row: number;
   col: number;
@@ -30,27 +33,48 @@ export function BoardSquare({
   const displayTile = tile || pendingTile;
   const isPending = !!pendingTile;
   
-  // Get letter value for display
+  // Check if the tile is a blank (lowercase letter)
+  const tileIsBlank = displayTile ? isBlankTile(displayTile.letter) : false;
+  const previewIsBlank = previewLetter ? isBlankTile(previewLetter) : false;
+  
+  // Get letter value for display (blank tiles = 0)
   const letterValue = displayTile 
-    ? LETTER_VALUES[displayTile.letter.toUpperCase()] || 0 
+    ? (tileIsBlank ? 0 : LETTER_VALUES[displayTile.letter.toUpperCase()] || 0)
     : previewLetter 
-      ? LETTER_VALUES[previewLetter.toUpperCase()] || 0
+      ? (previewIsBlank ? 0 : LETTER_VALUES[previewLetter.toUpperCase()] || 0)
       : 0;
 
   // Determine background styling
   const getBackgroundClass = () => {
     if (displayTile) {
+      if (tileIsBlank) {
+        // Blank tiles have a distinct appearance with dashed border
+        return isPending
+          ? 'bg-stone-200 text-stone-700 shadow-md scale-105'
+          : 'bg-stone-100 text-stone-600 shadow-sm';
+      }
       return isPending
         ? 'bg-[#faf8f5] text-[#1e3a5f] ring-2 ring-[#1e3a5f] shadow-md scale-105'
         : 'bg-[#f5f0e8] text-[#1e3a5f] shadow-sm';
     }
     if (isPreview && previewLetter) {
+      if (previewIsBlank) {
+        return 'bg-stone-200 text-stone-600 shadow-sm';
+      }
       return 'bg-[#e8dfd2] text-[#1e3a5f] ring-1 ring-[#1e3a5f] shadow-sm';
     }
     if (isPreview) {
       return 'bg-[#d4c4a8]/50 ring-1 ring-[#1e3a5f]/50';
     }
     return `${colors.bg} ${colors.text}`;
+  };
+  
+  // Get border class - blank tiles get dashed border
+  const getBorderClass = () => {
+    if (tileIsBlank || previewIsBlank) {
+      return 'border-2 border-dashed border-stone-500';
+    }
+    return 'border border-[#1e3a5f]/20';
   };
 
   return (
@@ -67,7 +91,7 @@ export function BoardSquare({
             ? 'cursor-default' 
             : 'cursor-not-allowed opacity-70'
         }
-        border border-[#1e3a5f]/20
+        ${getBorderClass()}
       `}
     >
       {displayTile ? (

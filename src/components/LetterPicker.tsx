@@ -12,6 +12,9 @@ interface LetterPickerProps {
   onClose: () => void;
 }
 
+// Helper to check if a letter is a blank (lowercase = blank tile)
+const isBlankTile = (letter: string) => letter === letter.toLowerCase() && letter !== letter.toUpperCase();
+
 export function LetterPicker({ 
   startRow, 
   startCol, 
@@ -21,6 +24,7 @@ export function LetterPicker({
 }: LetterPickerProps) {
   const [word, setWord] = useState('');
   const [direction, setDirection] = useState<Direction>('horizontal');
+  const [showBlankPicker, setShowBlankPicker] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -54,13 +58,17 @@ export function LetterPicker({
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        onClose();
+        if (showBlankPicker) {
+          setShowBlankPicker(false);
+        } else {
+          onClose();
+        }
       }
     };
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [onClose]);
+  }, [onClose, showBlankPicker]);
 
   // Close on click outside
   useEffect(() => {
@@ -75,6 +83,7 @@ export function LetterPicker({
   }, [onClose]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Only allow uppercase letters (lowercase reserved for blank tiles added via picker)
     const value = e.target.value.toUpperCase().replace(/[^A-Z]/g, '');
     const maxLength = direction === 'horizontal' ? horizontalSpaces : verticalSpaces;
     setWord(value.slice(0, maxLength));
@@ -85,6 +94,20 @@ export function LetterPicker({
     if (word.length < maxLength) {
       setWord(prev => prev + letter);
     }
+    inputRef.current?.focus();
+  };
+
+  const handleBlankTileClick = () => {
+    const maxLength = direction === 'horizontal' ? horizontalSpaces : verticalSpaces;
+    if (word.length < maxLength) {
+      setShowBlankPicker(true);
+    }
+  };
+
+  const handleBlankLetterSelect = (letter: string) => {
+    // Add as lowercase to indicate it's a blank tile
+    setWord(prev => prev + letter.toLowerCase());
+    setShowBlankPicker(false);
     inputRef.current?.focus();
   };
 
@@ -105,11 +128,16 @@ export function LetterPicker({
     }
   };
 
-  // Calculate score preview
+  // Calculate score preview (blank tiles = lowercase = 0 points)
   const calculatePreviewScore = (): number => {
     let score = 0;
     for (const letter of word) {
-      score += LETTER_VALUES[letter] || 0;
+      // Lowercase letters are blank tiles worth 0 points
+      if (isBlankTile(letter)) {
+        score += 0;
+      } else {
+        score += LETTER_VALUES[letter] || 0;
+      }
     }
     return score;
   };
@@ -117,10 +145,10 @@ export function LetterPicker({
   const maxLength = direction === 'horizontal' ? horizontalSpaces : verticalSpaces;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/50 flex items-start sm:items-center justify-center z-50 p-4 pt-2 sm:pt-4">
       <div 
         ref={modalRef}
-        className="bg-white rounded-xl shadow-2xl p-4 sm:p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto"
+        className="bg-white rounded-xl shadow-2xl p-4 sm:p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto relative"
       >
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-bold text-gray-800">Place a Word</h3>
@@ -186,19 +214,26 @@ export function LetterPicker({
         {word.length > 0 && (
           <div className="mb-4 p-3 bg-emerald-50 rounded-lg border border-emerald-200">
             <div className="flex items-center justify-between">
-              <div className="flex gap-1">
-                {word.split('').map((letter, i) => (
-                  <div 
-                    key={i}
-                    className="w-8 h-8 bg-emerald-400 rounded flex items-center justify-center
-                      text-emerald-900 font-bold text-sm shadow-sm relative"
-                  >
-                    {letter}
-                    <span className="absolute bottom-0 right-0.5 text-[8px] opacity-60">
-                      {LETTER_VALUES[letter]}
-                    </span>
-                  </div>
-                ))}
+              <div className="flex gap-1 flex-wrap">
+                {word.split('').map((letter, i) => {
+                  const isBlank = isBlankTile(letter);
+                  return (
+                    <div 
+                      key={i}
+                      className={`w-8 h-8 rounded flex items-center justify-center
+                        font-bold text-sm shadow-sm relative
+                        ${isBlank 
+                          ? 'bg-stone-200 text-stone-700 border-2 border-dashed border-stone-400' 
+                          : 'bg-emerald-400 text-emerald-900'
+                        }`}
+                    >
+                      {letter.toUpperCase()}
+                      <span className="absolute bottom-0 right-0.5 text-[8px] opacity-60">
+                        {isBlank ? '0' : LETTER_VALUES[letter]}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
               <div className="text-right">
                 <div className="text-xs text-emerald-600">Base Score</div>
@@ -221,6 +256,7 @@ export function LetterPicker({
               <button
                 key={letter}
                 onClick={() => handleLetterClick(letter)}
+                onKeyDown={(e) => e.key === 'Enter' && word.length > 0 && handleSubmit()}
                 disabled={word.length >= maxLength}
                 className="relative aspect-square flex items-center justify-center 
                   bg-amber-100 hover:bg-amber-300 disabled:bg-gray-100 disabled:text-gray-400
@@ -234,9 +270,27 @@ export function LetterPicker({
                 </span>
               </button>
             ))}
+            {/* Blank tile button */}
+            <button
+              onClick={handleBlankTileClick}
+              onKeyDown={(e) => e.key === 'Enter' && word.length > 0 && handleSubmit()}
+              disabled={word.length >= maxLength}
+              className="relative aspect-square flex items-center justify-center 
+                bg-stone-100 hover:bg-stone-200 disabled:bg-stone-50 disabled:text-stone-300
+                text-stone-500 font-bold text-xs
+                rounded-md transition-all duration-150 hover:scale-105 shadow-sm
+                border-2 border-dashed border-stone-400 disabled:border-stone-200"
+              title="Blank tile (0 points) - click to choose letter"
+            >
+              ?
+              <span className="absolute bottom-0 right-0.5 text-[7px] opacity-60">
+                0
+              </span>
+            </button>
             {/* Backspace button */}
             <button
               onClick={handleBackspace}
+              onKeyDown={(e) => e.key === 'Enter' && word.length > 0 && handleSubmit()}
               disabled={word.length === 0}
               className="aspect-square flex items-center justify-center 
                 bg-red-100 hover:bg-red-200 disabled:bg-gray-100 disabled:text-gray-400
@@ -268,6 +322,40 @@ export function LetterPicker({
             Place Word
           </button>
         </div>
+
+        {/* Blank Tile Letter Picker Overlay */}
+        {showBlankPicker && (
+          <div className="absolute inset-0 bg-black/60 rounded-xl flex items-center justify-center p-4">
+            <div className="bg-white rounded-lg p-4 max-w-xs w-full shadow-xl">
+              <div className="flex justify-between items-center mb-3">
+                <h4 className="font-bold text-gray-800">Choose letter for blank tile</h4>
+                <button
+                  onClick={() => setShowBlankPicker(false)}
+                  className="text-gray-500 hover:text-gray-700 text-xl leading-none"
+                >
+                  ×
+                </button>
+              </div>
+              <p className="text-xs text-gray-500 mb-3">
+                Blank tiles are worth 0 points but can represent any letter.
+              </p>
+              <div className="grid grid-cols-9 gap-1">
+                {ALPHABET.map((letter) => (
+                  <button
+                    key={letter}
+                    onClick={() => handleBlankLetterSelect(letter)}
+                    className="aspect-square flex items-center justify-center 
+                      bg-stone-100 hover:bg-stone-300 
+                      text-stone-700 font-bold text-sm
+                      rounded transition-all border border-stone-300"
+                  >
+                    {letter}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

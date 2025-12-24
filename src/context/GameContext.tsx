@@ -103,7 +103,8 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       let currentRow = startRow;
       let currentCol = startCol;
       
-      for (const letter of word.toUpperCase()) {
+      // Don't convert to uppercase - lowercase letters indicate blank tiles (worth 0 points)
+      for (const letter of word) {
         // Skip if out of bounds
         if (currentRow >= BOARD_SIZE || currentCol >= BOARD_SIZE) break;
         

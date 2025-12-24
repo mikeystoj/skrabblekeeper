@@ -41,14 +41,19 @@ export async function storeLicenseKey(
 export async function validateLicenseKey(licenseKey: string): Promise<LicenseData | null> {
   const supabase = getSupabase();
   
+  console.log('Validating license key:', licenseKey);
+  
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (supabase as any)
     .from('licenses')
     .select('*')
     .eq('license_key', licenseKey)
     .single();
+  
+  console.log('Supabase response:', { data, error });
     
   if (error || !data) {
+    console.log('License not found or error:', error);
     return null;
   }
   

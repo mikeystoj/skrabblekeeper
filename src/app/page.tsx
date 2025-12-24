@@ -61,29 +61,6 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Board Legend - simplified */}
-          {viewMode === 'board' && (
-            <div className="mt-4 p-3 bg-[#faf8f5] rounded-lg max-w-md mx-auto">
-              <div className="flex flex-wrap gap-3 justify-center text-xs">
-                <div className="flex items-center gap-1">
-                  <span className="w-5 h-5 bg-[#1e3a5f] rounded text-[#f5f0e8] flex items-center justify-center font-bold text-[10px]">TW</span>
-                  <span className="text-[#1e3a5f]">3×Word</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <span className="w-5 h-5 bg-[#3d5a80] rounded text-[#f5f0e8] flex items-center justify-center font-bold text-[10px]">DW</span>
-                  <span className="text-[#1e3a5f]">2×Word</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <span className="w-5 h-5 bg-[#c4a882] rounded text-[#0f1f36] flex items-center justify-center font-bold text-[10px]">TL</span>
-                  <span className="text-[#1e3a5f]">3×Letter</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <span className="w-5 h-5 bg-[#d4c4a8] rounded text-[#0f1f36] flex items-center justify-center font-bold text-[10px]">DL</span>
-                  <span className="text-[#1e3a5f]">2×Letter</span>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       </main>
       <Footer />
