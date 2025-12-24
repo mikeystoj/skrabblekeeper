@@ -1,0 +1,9 @@
+# Skrabble Keeper - Scrabble Score Tracker
+# https://skrabblekeeper.vercel.app
+
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://skrabblekeeper.vercel.app/sitemap.xml
+

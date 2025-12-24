@@ -1,0 +1,48 @@
+# Skrabble Keeper
+
+> A simple, free online Scrabble score keeper with interactive board view.
+
+## About
+
+Skrabble Keeper is a web-based Scrabble scoring application that helps players track their game scores without needing pen and paper. It features an accurate 15x15 Scrabble board with all premium squares (Double Letter, Triple Letter, Double Word, Triple Word) and automatic score calculation.
+
+## Features
+
+- Interactive Scrabble board with accurate premium square layout
+- Automatic score calculation including letter values and multipliers
+- Support for up to 4 players
+- Word history tracking per player
+- Pass turn and undo functionality
+- Works offline (localStorage persistence)
+- Mobile-friendly responsive design
+- No account required
+
+## How It Works
+
+1. Add player names (up to 4 players)
+2. Click on board squares to place words
+3. Type your word and choose direction (horizontal/vertical)
+4. Submit to calculate score automatically
+5. View scores and word history in the Scores tab
+
+## Technical Details
+
+- Built with Next.js 14 and React
+- Styled with Tailwind CSS
+- Client-side state management with React Context
+- Data persisted in localStorage
+- No backend required for basic functionality
+
+## Pro Features (Coming Soon)
+
+- Dictionary validation with official Scrabble dictionaries
+- Game history and personal stats tracking
+- Predictive word helper suggestions
+- Word lookup and point calculator
+- Multi-lingual support
+- Turn timer for competitive play
+
+## Contact
+
+Made by Mayke
+
