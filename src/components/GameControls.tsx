@@ -477,28 +477,40 @@ export function GameControls({ viewMode, onViewModeChange }: GameControlsProps) 
         </div>
       )}
 
-      {/* Game Summary */}
+      {/* Scoreboard */}
       {viewMode === 'board' && state.players.length > 0 && (
         <div className="p-2 bg-[#e8dfd2] rounded-md">
-          <div className="grid grid-cols-3 gap-2 text-center">
-            <div>
-              <div className="text-lg font-bold text-[#1e3a5f]">
-                ~{gameStats.tilesRemaining}
-              </div>
-              <div className="text-[10px] text-[#1e3a5f] opacity-70">Tiles Left</div>
-            </div>
-            <div>
-              <div className="text-lg font-bold text-[#1e3a5f] truncate">
-                {gameStats.leader?.name || '-'}
-              </div>
-              <div className="text-[10px] text-[#1e3a5f] opacity-70">Leader</div>
-            </div>
-            <div>
-              <div className="text-lg font-bold text-[#1e3a5f]">
-                {gameStats.totalScore}
-              </div>
-              <div className="text-[10px] text-[#1e3a5f] opacity-70">Total Pts</div>
-            </div>
+          <div className="space-y-1">
+            {[...state.players]
+              .sort((a, b) => b.score - a.score)
+              .map((player, index) => (
+                <div 
+                  key={player.id}
+                  className={`flex items-center justify-between px-2 py-1 rounded ${
+                    player.id === state.currentPlayerId 
+                      ? 'bg-[#1e3a5f] text-[#f5f0e8]' 
+                      : ''
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <span className={`text-xs font-medium w-4 ${
+                      player.id === state.currentPlayerId ? 'text-[#c4a882]' : 'text-[#1e3a5f]/50'
+                    }`}>
+                      {index === 0 ? '1st' : index === 1 ? '2nd' : index === 2 ? '3rd' : `${index + 1}th`}
+                    </span>
+                    <span className={`text-sm font-medium truncate max-w-[100px] ${
+                      player.id === state.currentPlayerId ? '' : 'text-[#1e3a5f]'
+                    }`}>
+                      {player.name}
+                    </span>
+                  </div>
+                  <span className={`font-bold text-sm ${
+                    player.id === state.currentPlayerId ? '' : 'text-[#1e3a5f]'
+                  }`}>
+                    {player.score}
+                  </span>
+                </div>
+              ))}
           </div>
         </div>
       )}
