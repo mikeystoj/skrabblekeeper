@@ -63,6 +63,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-title" content="Skrabble" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="theme-color" content="#1e3a5f" />
+      </head>
       <body className={`${dmSans.variable} font-sans antialiased`}>
         <GameProvider>
           {children}

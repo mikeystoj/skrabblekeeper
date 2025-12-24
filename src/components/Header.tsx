@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useGame } from '@/context/GameContext';
 import { NewGameModal } from './NewGameModal';
 import { ProModal } from './ProModal';
@@ -28,25 +28,150 @@ function InfoIcon({ className }: { className?: string }) {
   );
 }
 
+// Menu icon for mobile
+function MenuIcon({ className }: { className?: string }) {
+  return (
+    <svg 
+      className={className}
+      width="20" 
+      height="20" 
+      viewBox="0 0 24 24" 
+      fill="none" 
+      stroke="currentColor" 
+      strokeWidth="2" 
+      strokeLinecap="round" 
+      strokeLinejoin="round"
+    >
+      <line x1="4" y1="12" x2="20" y2="12" />
+      <line x1="4" y1="6" x2="20" y2="6" />
+      <line x1="4" y1="18" x2="20" y2="18" />
+    </svg>
+  );
+}
+
+// Close icon
+function CloseIcon({ className }: { className?: string }) {
+  return (
+    <svg 
+      className={className}
+      width="20" 
+      height="20" 
+      viewBox="0 0 24 24" 
+      fill="none" 
+      stroke="currentColor" 
+      strokeWidth="2" 
+      strokeLinecap="round" 
+      strokeLinejoin="round"
+    >
+      <line x1="18" y1="6" x2="6" y2="18" />
+      <line x1="6" y1="6" x2="18" y2="18" />
+    </svg>
+  );
+}
+
+// Install prompt modal for PWA
+function InstallPrompt({ onClose }: { onClose: () => void }) {
+  const [isIOS, setIsIOS] = useState(false);
+  const [isAndroid, setIsAndroid] = useState(false);
+
+  useEffect(() => {
+    const ua = navigator.userAgent;
+    setIsIOS(/iPad|iPhone|iPod/.test(ua));
+    setIsAndroid(/Android/.test(ua));
+  }, []);
+
+  return (
+    <div 
+      className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4"
+      onClick={onClose}
+    >
+      <div 
+        className="bg-[#faf8f5] rounded-xl shadow-xl max-w-sm w-full overflow-hidden"
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="bg-[#1e3a5f] px-5 py-4">
+          <h2 className="text-lg font-bold text-[#f5f0e8]">Add to Home Screen</h2>
+        </div>
+
+        <div className="px-5 py-4 space-y-3">
+          <p className="text-sm text-[#1e3a5f]">
+            Install Skrabble Keeper as an app for quick access!
+          </p>
+
+          {isIOS ? (
+            <div className="text-sm text-[#1e3a5f] space-y-2">
+              <p className="font-medium">On Safari:</p>
+              <ol className="list-decimal ml-5 space-y-1">
+                <li>Tap the <strong>Share</strong> button (□↑)</li>
+                <li>Scroll down and tap <strong>Add to Home Screen</strong></li>
+                <li>Tap <strong>Add</strong></li>
+              </ol>
+            </div>
+          ) : isAndroid ? (
+            <div className="text-sm text-[#1e3a5f] space-y-2">
+              <p className="font-medium">On Chrome:</p>
+              <ol className="list-decimal ml-5 space-y-1">
+                <li>Tap the <strong>menu</strong> (⋮) button</li>
+                <li>Tap <strong>Add to Home screen</strong></li>
+                <li>Tap <strong>Add</strong></li>
+              </ol>
+            </div>
+          ) : (
+            <div className="text-sm text-[#1e3a5f] space-y-2">
+              <p className="font-medium">On your browser:</p>
+              <ol className="list-decimal ml-5 space-y-1">
+                <li>Look for the install icon in the address bar</li>
+                <li>Or use your browser&apos;s menu to &quot;Install app&quot;</li>
+              </ol>
+            </div>
+          )}
+        </div>
+
+        <div className="px-5 pb-5">
+          <button
+            onClick={onClose}
+            className="w-full py-2.5 px-4 bg-[#1e3a5f] hover:bg-[#162d4d] 
+              text-[#f5f0e8] font-medium rounded-lg transition-colors"
+          >
+            Got it
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function Header() {
   const { state, dispatch } = useGame();
   const [showNewGameModal, setShowNewGameModal] = useState(false);
   const [showProModal, setShowProModal] = useState(false);
   const [showInfoModal, setShowInfoModal] = useState(false);
+  const [showInstallPrompt, setShowInstallPrompt] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [isStandalone, setIsStandalone] = useState(false);
+
+  useEffect(() => {
+    // Check if already installed as PWA
+    const isInStandaloneMode = window.matchMedia('(display-mode: standalone)').matches 
+      || (window.navigator as Navigator & { standalone?: boolean }).standalone === true;
+    setIsStandalone(isInStandaloneMode);
+  }, []);
 
   const handleRestartSamePlayers = () => {
     dispatch({ type: 'NEW_GAME' });
     setShowNewGameModal(false);
+    setShowMobileMenu(false);
   };
 
   const handleNewGameNewPlayers = () => {
     dispatch({ type: 'FULL_NEW_GAME' });
     setShowNewGameModal(false);
+    setShowMobileMenu(false);
   };
 
   return (
     <>
-      <header className="py-4 px-6">
+      <header className="py-3 px-4 sm:py-4 sm:px-6">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <Image
             src="/SkrabbleKeeperLogo.svg"
@@ -54,11 +179,11 @@ export function Header() {
             width={280}
             height={130}
             priority
-            className="h-12 sm:h-16 w-auto"
+            className="h-10 sm:h-16 w-auto"
           />
           
-          <div className="flex items-center gap-2">
-            {/* Info Button */}
+          {/* Desktop buttons */}
+          <div className="hidden sm:flex items-center gap-2">
             <button
               onClick={() => setShowInfoModal(true)}
               className="p-2 text-[#1e3a5f]/60 hover:text-[#1e3a5f] 
@@ -68,15 +193,14 @@ export function Header() {
               <InfoIcon />
             </button>
 
-            {/* Pro Button */}
             <button
               onClick={() => setShowProModal(true)}
               className="py-2 px-3 bg-[#c4a882] 
                 text-[#1e3a5f] font-bold 
                 rounded-lg transition-all text-sm hover:shadow-lg 
-                transform hover:-translate-y-0.5 flex items-center gap-1"
+                transform hover:-translate-y-0.5"
             >
-              <span>Keeper Pro</span>
+              Keeper Pro
             </button>
 
             {state.gameStarted && (
@@ -89,7 +213,72 @@ export function Header() {
               </button>
             )}
           </div>
+
+          {/* Mobile menu button */}
+          <button
+            onClick={() => setShowMobileMenu(!showMobileMenu)}
+            className="sm:hidden p-2 text-[#1e3a5f] hover:bg-[#e8dfd2] rounded-lg transition-all"
+          >
+            {showMobileMenu ? <CloseIcon /> : <MenuIcon />}
+          </button>
         </div>
+
+        {/* Mobile dropdown menu */}
+        {showMobileMenu && (
+          <div className="sm:hidden mt-3 bg-[#faf8f5] rounded-lg shadow-lg border border-[#e8dfd2] overflow-hidden">
+            <button
+              onClick={() => {
+                setShowInfoModal(true);
+                setShowMobileMenu(false);
+              }}
+              className="w-full px-4 py-3 text-left text-sm text-[#1e3a5f] hover:bg-[#e8dfd2] 
+                flex items-center gap-3 border-b border-[#e8dfd2]"
+            >
+              <InfoIcon className="opacity-60" />
+              About
+            </button>
+
+            <button
+              onClick={() => {
+                setShowProModal(true);
+                setShowMobileMenu(false);
+              }}
+              className="w-full px-4 py-3 text-left text-sm text-[#1e3a5f] hover:bg-[#e8dfd2] 
+                flex items-center gap-3 border-b border-[#e8dfd2]"
+            >
+              <span className="text-[#c4a882]">★</span>
+              Keeper Pro
+            </button>
+
+            {!isStandalone && (
+              <button
+                onClick={() => {
+                  setShowInstallPrompt(true);
+                  setShowMobileMenu(false);
+                }}
+                className="w-full px-4 py-3 text-left text-sm text-[#1e3a5f] hover:bg-[#e8dfd2] 
+                  flex items-center gap-3 border-b border-[#e8dfd2]"
+              >
+                <span>📱</span>
+                Add as App
+              </button>
+            )}
+
+            {state.gameStarted && (
+              <button
+                onClick={() => {
+                  setShowNewGameModal(true);
+                  setShowMobileMenu(false);
+                }}
+                className="w-full px-4 py-3 text-left text-sm font-medium text-[#1e3a5f] 
+                  hover:bg-[#e8dfd2] flex items-center gap-3"
+              >
+                <span>🔄</span>
+                New Game
+              </button>
+            )}
+          </div>
+        )}
       </header>
 
       <NewGameModal
@@ -108,6 +297,10 @@ export function Header() {
         isOpen={showInfoModal}
         onClose={() => setShowInfoModal(false)}
       />
+
+      {showInstallPrompt && (
+        <InstallPrompt onClose={() => setShowInstallPrompt(false)} />
+      )}
     </>
   );
 }
