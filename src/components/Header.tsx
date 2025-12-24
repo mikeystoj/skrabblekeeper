@@ -5,11 +5,34 @@ import { useState } from 'react';
 import { useGame } from '@/context/GameContext';
 import { NewGameModal } from './NewGameModal';
 import { ProModal } from './ProModal';
+import { InfoModal } from './InfoModal';
+
+// Info icon component
+function InfoIcon({ className }: { className?: string }) {
+  return (
+    <svg 
+      className={className}
+      width="18" 
+      height="18" 
+      viewBox="0 0 24 24" 
+      fill="none" 
+      stroke="currentColor" 
+      strokeWidth="2" 
+      strokeLinecap="round" 
+      strokeLinejoin="round"
+    >
+      <circle cx="12" cy="12" r="10" />
+      <path d="M12 16v-4" />
+      <path d="M12 8h.01" />
+    </svg>
+  );
+}
 
 export function Header() {
   const { state, dispatch } = useGame();
   const [showNewGameModal, setShowNewGameModal] = useState(false);
   const [showProModal, setShowProModal] = useState(false);
+  const [showInfoModal, setShowInfoModal] = useState(false);
 
   const handleRestartSamePlayers = () => {
     dispatch({ type: 'NEW_GAME' });
@@ -35,6 +58,16 @@ export function Header() {
           />
           
           <div className="flex items-center gap-2">
+            {/* Info Button */}
+            <button
+              onClick={() => setShowInfoModal(true)}
+              className="p-2 text-[#1e3a5f]/60 hover:text-[#1e3a5f] 
+                hover:bg-[#e8dfd2] rounded-lg transition-all"
+              title="About this app"
+            >
+              <InfoIcon />
+            </button>
+
             {/* Pro Button */}
             <button
               onClick={() => setShowProModal(true)}
@@ -69,6 +102,11 @@ export function Header() {
       <ProModal
         isOpen={showProModal}
         onClose={() => setShowProModal(false)}
+      />
+
+      <InfoModal
+        isOpen={showInfoModal}
+        onClose={() => setShowInfoModal(false)}
       />
     </>
   );
