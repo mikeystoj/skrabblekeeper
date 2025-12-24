@@ -1,11 +1,14 @@
 'use client';
 
 import Image from 'next/image';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useGame } from '@/context/GameContext';
+import { usePro } from '@/context/ProContext';
 import { NewGameModal } from './NewGameModal';
 import { ProModal } from './ProModal';
 import { InfoModal } from './InfoModal';
+import { ProSettings } from './ProSettings';
+import { GameHistory } from './GameHistory';
 
 // Info icon component
 function InfoIcon({ className }: { className?: string }) {
@@ -65,6 +68,25 @@ function CloseIcon({ className }: { className?: string }) {
     >
       <line x1="18" y1="6" x2="6" y2="18" />
       <line x1="6" y1="6" x2="18" y2="18" />
+    </svg>
+  );
+}
+
+// Chevron down icon
+function ChevronDownIcon({ className }: { className?: string }) {
+  return (
+    <svg 
+      className={className}
+      width="16" 
+      height="16" 
+      viewBox="0 0 24 24" 
+      fill="none" 
+      stroke="currentColor" 
+      strokeWidth="2" 
+      strokeLinecap="round" 
+      strokeLinejoin="round"
+    >
+      <polyline points="6 9 12 15 18 9" />
     </svg>
   );
 }
@@ -141,13 +163,85 @@ function InstallPrompt({ onClose }: { onClose: () => void }) {
   );
 }
 
+// Pro Dropdown Menu
+function ProDropdown({ 
+  onSettings, 
+  onHistory,
+  onManageLicense 
+}: { 
+  onSettings: () => void;
+  onHistory: () => void;
+  onManageLicense: () => void;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="py-2 px-3 bg-[#1e3a5f] 
+          text-[#f5f0e8] font-bold 
+          rounded-lg transition-all text-sm hover:bg-[#162d4d]
+          flex items-center gap-1"
+      >
+        <span className="text-[#c4a882]">★</span>
+        Pro
+        <ChevronDownIcon className={`transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+      </button>
+
+      {isOpen && (
+        <div className="absolute right-0 mt-2 w-48 bg-[#faf8f5] rounded-lg shadow-lg border border-[#e8dfd2] overflow-hidden z-50">
+          <button
+            onClick={() => { onHistory(); setIsOpen(false); }}
+            className="w-full px-4 py-3 text-left text-sm text-[#1e3a5f] hover:bg-[#e8dfd2] 
+              flex items-center gap-3 border-b border-[#e8dfd2]"
+          >
+            <span>📊</span>
+            Game History
+          </button>
+          <button
+            onClick={() => { onSettings(); setIsOpen(false); }}
+            className="w-full px-4 py-3 text-left text-sm text-[#1e3a5f] hover:bg-[#e8dfd2] 
+              flex items-center gap-3 border-b border-[#e8dfd2]"
+          >
+            <span>⚙️</span>
+            Settings
+          </button>
+          <button
+            onClick={() => { onManageLicense(); setIsOpen(false); }}
+            className="w-full px-4 py-3 text-left text-sm text-[#1e3a5f]/60 hover:bg-[#e8dfd2] 
+              flex items-center gap-3"
+          >
+            <span>🔑</span>
+            Manage License
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function Header() {
   const { state, dispatch } = useGame();
+  const { isPro } = usePro();
   const [showNewGameModal, setShowNewGameModal] = useState(false);
   const [showProModal, setShowProModal] = useState(false);
   const [showInfoModal, setShowInfoModal] = useState(false);
   const [showInstallPrompt, setShowInstallPrompt] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
 
   useEffect(() => {
@@ -193,15 +287,23 @@ export function Header() {
               <InfoIcon />
             </button>
 
-            <button
-              onClick={() => setShowProModal(true)}
-              className="py-2 px-3 bg-[#c4a882] 
-                text-[#1e3a5f] font-bold 
-                rounded-lg transition-all text-sm hover:shadow-lg 
-                transform hover:-translate-y-0.5"
-            >
-              Keeper Pro
-            </button>
+            {isPro ? (
+              <ProDropdown 
+                onSettings={() => setShowSettings(true)}
+                onHistory={() => setShowHistory(true)}
+                onManageLicense={() => setShowProModal(true)}
+              />
+            ) : (
+              <button
+                onClick={() => setShowProModal(true)}
+                className="py-2 px-3 bg-[#c4a882] 
+                  text-[#1e3a5f] font-bold 
+                  rounded-lg transition-all text-sm hover:shadow-lg 
+                  transform hover:-translate-y-0.5"
+              >
+                Keeper Pro
+              </button>
+            )}
 
             {state.gameStarted && (
               <button
@@ -238,17 +340,55 @@ export function Header() {
               About
             </button>
 
-            <button
-              onClick={() => {
-                setShowProModal(true);
-                setShowMobileMenu(false);
-              }}
-              className="w-full px-4 py-3 text-left text-sm text-[#1e3a5f] hover:bg-[#e8dfd2] 
-                flex items-center gap-3 border-b border-[#e8dfd2]"
-            >
-              <span className="text-[#c4a882]">★</span>
-              Keeper Pro
-            </button>
+            {isPro ? (
+              <>
+                <button
+                  onClick={() => {
+                    setShowHistory(true);
+                    setShowMobileMenu(false);
+                  }}
+                  className="w-full px-4 py-3 text-left text-sm text-[#1e3a5f] hover:bg-[#e8dfd2] 
+                    flex items-center gap-3 border-b border-[#e8dfd2]"
+                >
+                  <span>📊</span>
+                  Game History
+                </button>
+                <button
+                  onClick={() => {
+                    setShowSettings(true);
+                    setShowMobileMenu(false);
+                  }}
+                  className="w-full px-4 py-3 text-left text-sm text-[#1e3a5f] hover:bg-[#e8dfd2] 
+                    flex items-center gap-3 border-b border-[#e8dfd2]"
+                >
+                  <span>⚙️</span>
+                  Pro Settings
+                </button>
+                <button
+                  onClick={() => {
+                    setShowProModal(true);
+                    setShowMobileMenu(false);
+                  }}
+                  className="w-full px-4 py-3 text-left text-sm text-[#1e3a5f]/60 hover:bg-[#e8dfd2] 
+                    flex items-center gap-3 border-b border-[#e8dfd2]"
+                >
+                  <span>🔑</span>
+                  Manage License
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={() => {
+                  setShowProModal(true);
+                  setShowMobileMenu(false);
+                }}
+                className="w-full px-4 py-3 text-left text-sm text-[#1e3a5f] hover:bg-[#e8dfd2] 
+                  flex items-center gap-3 border-b border-[#e8dfd2]"
+              >
+                <span className="text-[#c4a882]">★</span>
+                Keeper Pro
+              </button>
+            )}
 
             {!isStandalone && (
               <button
@@ -296,6 +436,16 @@ export function Header() {
       <InfoModal
         isOpen={showInfoModal}
         onClose={() => setShowInfoModal(false)}
+      />
+
+      <ProSettings
+        isOpen={showSettings}
+        onClose={() => setShowSettings(false)}
+      />
+
+      <GameHistory
+        isOpen={showHistory}
+        onClose={() => setShowHistory(false)}
       />
 
       {showInstallPrompt && (

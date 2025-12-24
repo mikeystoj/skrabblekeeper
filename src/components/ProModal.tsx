@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { usePro } from '@/context/ProContext';
 
 interface ProModalProps {
   isOpen: boolean;
@@ -10,23 +11,12 @@ interface ProModalProps {
 type View = 'main' | 'activate' | 'purchase';
 
 export function ProModal({ isOpen, onClose }: ProModalProps) {
+  const { isPro, licenseEmail, activatePro, deactivatePro } = usePro();
   const [view, setView] = useState<View>('main');
   const [email, setEmail] = useState('');
   const [licenseKey, setLicenseKey] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const [isPro, setIsPro] = useState(false);
-  const [proEmail, setProEmail] = useState('');
-
-  // Check if user already has Pro activated (stored in localStorage)
-  useEffect(() => {
-    const storedLicense = localStorage.getItem('skrabble_pro_license');
-    const storedEmail = localStorage.getItem('skrabble_pro_email');
-    if (storedLicense && storedEmail) {
-      setIsPro(true);
-      setProEmail(storedEmail);
-    }
-  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -88,11 +78,7 @@ export function ProModal({ isOpen, onClose }: ProModalProps) {
       const data = await response.json();
 
       if (data.valid) {
-        // Store in localStorage
-        localStorage.setItem('skrabble_pro_license', licenseKey.trim().toUpperCase());
-        localStorage.setItem('skrabble_pro_email', data.email);
-        setIsPro(true);
-        setProEmail(data.email);
+        activatePro(licenseKey.trim().toUpperCase(), data.email);
         setView('main');
       } else {
         setError(data.error || 'Invalid license key');
@@ -105,10 +91,7 @@ export function ProModal({ isOpen, onClose }: ProModalProps) {
   };
 
   const handleDeactivate = () => {
-    localStorage.removeItem('skrabble_pro_license');
-    localStorage.removeItem('skrabble_pro_email');
-    setIsPro(false);
-    setProEmail('');
+    deactivatePro();
   };
 
   const resetAndClose = () => {
@@ -141,7 +124,7 @@ export function ProModal({ isOpen, onClose }: ProModalProps) {
             <div className="text-4xl mb-3">🎉</div>
             <p className="text-[#1e3a5f] font-medium mb-1">You have Pro access!</p>
             <p className="text-sm text-[#1e3a5f]/60 mb-4">
-              Licensed to: {proEmail}
+              Licensed to: {licenseEmail}
             </p>
 
             <div className="bg-[#f5f0e8] rounded-lg p-3 mb-4">
@@ -186,7 +169,7 @@ export function ProModal({ isOpen, onClose }: ProModalProps) {
         >
           <div className="bg-[#1e3a5f] px-5 py-4">
             <h2 className="text-lg font-bold text-[#f5f0e8]">Get Keeper Pro</h2>
-            <p className="text-[#f5f0e8]/70 text-sm">$1 one-time payment (testing)</p>
+            <p className="text-[#f5f0e8]/70 text-sm">$10 one-time payment</p>
           </div>
 
           <div className="p-5">
@@ -318,7 +301,7 @@ export function ProModal({ isOpen, onClose }: ProModalProps) {
         {/* Price */}
         <div className="px-5 py-4 border-b border-[#e8dfd2]">
           <div className="flex items-baseline gap-1">
-            <span className="text-3xl font-bold text-[#1e3a5f]">$1</span>
+            <span className="text-3xl font-bold text-[#1e3a5f]">$10</span>
             <span className="text-[#1e3a5f]/50 text-sm">one-time</span>
           </div>
         </div>
@@ -342,7 +325,7 @@ export function ProModal({ isOpen, onClose }: ProModalProps) {
             className="w-full py-2.5 px-4 bg-[#1e3a5f] hover:bg-[#162d4d]
               text-[#f5f0e8] font-bold rounded-lg transition-colors"
           >
-            Get Pro - $1
+            Get Pro - $10
           </button>
           <button
             onClick={() => setView('activate')}
