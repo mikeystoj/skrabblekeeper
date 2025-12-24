@@ -151,6 +151,61 @@ export function ProSettings({ isOpen, onClose }: ProSettingsProps) {
         </div>
 
         <div className="p-5 space-y-6">
+          {/* Turn Timer Toggle */}
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <h3 className="font-medium text-[#1e3a5f]">Turn Timer</h3>
+                <p className="text-sm text-[#1e3a5f]/60">
+                  Set a time limit for each turn
+                </p>
+              </div>
+              <button
+                onClick={() => setLocalSettings({ ...localSettings, timerEnabled: !localSettings.timerEnabled })}
+                className={`w-12 h-7 rounded-full transition-colors relative ${
+                  localSettings.timerEnabled ? 'bg-[#1e3a5f]' : 'bg-[#d4c4a8]'
+                }`}
+              >
+                <span 
+                  className={`absolute top-1 w-5 h-5 bg-white rounded-full transition-transform ${
+                    localSettings.timerEnabled ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+            </div>
+            
+            {localSettings.timerEnabled && (
+              <div className="flex items-center gap-3 bg-[#f5f0e8] rounded-lg p-3">
+                <span className="text-sm text-[#1e3a5f]">Minutes per turn:</span>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setLocalSettings({ 
+                      ...localSettings, 
+                      timerMinutes: Math.max(1, (localSettings.timerMinutes || 2) - 1) 
+                    })}
+                    className="w-8 h-8 rounded-lg bg-[#e8dfd2] hover:bg-[#d4c4a8] 
+                      text-[#1e3a5f] font-bold transition-colors"
+                  >
+                    -
+                  </button>
+                  <span className="w-8 text-center font-bold text-[#1e3a5f]">
+                    {localSettings.timerMinutes || 2}
+                  </span>
+                  <button
+                    onClick={() => setLocalSettings({ 
+                      ...localSettings, 
+                      timerMinutes: Math.min(10, (localSettings.timerMinutes || 2) + 1) 
+                    })}
+                    className="w-8 h-8 rounded-lg bg-[#e8dfd2] hover:bg-[#d4c4a8] 
+                      text-[#1e3a5f] font-bold transition-colors"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* Word Checker Toggle */}
           <div className="flex items-center justify-between">
             <div>

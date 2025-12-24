@@ -1,9 +1,10 @@
 'use client';
 
 import { useGame } from '@/context/GameContext';
+import { usePro } from '@/context/ProContext';
 import { calculateAllWordsScore } from '@/lib/scoring';
 import { ViewMode } from '@/lib/types';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
 interface GameControlsProps {
   viewMode: ViewMode;
@@ -15,6 +16,10 @@ const TOTAL_TILES = 100;
 
 export function GameControls({ viewMode, onViewModeChange }: GameControlsProps) {
   const { state, dispatch } = useGame();
+  const { isPro, saveGame, settings } = usePro();
+  const [showEndGameModal, setShowEndGameModal] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [gameStartTime] = useState(() => Date.now());
 
   const currentPlayer = state.players.find(p => p.id === state.currentPlayerId);
   
@@ -101,7 +106,138 @@ export function GameControls({ viewMode, onViewModeChange }: GameControlsProps) 
     }
   };
 
+  const handleEndGame = async (saveToHistory: boolean) => {
+    if (saveToHistory && isPro) {
+      setIsSaving(true);
+      
+      // Calculate game duration
+      const durationMinutes = Math.round((Date.now() - gameStartTime) / 60000);
+      
+      // Find winner
+      const sortedPlayers = [...state.players].sort((a, b) => b.score - a.score);
+      const winner = sortedPlayers[0]?.name || null;
+      
+      // Calculate total turns
+      const totalTurns = state.players.reduce((sum, p) => sum + p.words.length, 0);
+      
+      // Format players data
+      const playersData = state.players.map(p => ({
+        name: p.name,
+        score: p.score,
+        words: p.words.map((w, i) => ({
+          word: w.word,
+          score: w.score,
+          turn: i + 1,
+        })),
+      }));
+
+      await saveGame({
+        durationMinutes,
+        players: playersData,
+        winner,
+        totalTurns,
+        settings,
+      });
+      
+      setIsSaving(false);
+    }
+    
+    setShowEndGameModal(false);
+    dispatch({ type: 'FULL_NEW_GAME' });
+  };
+
+  // End Game Modal
+  const EndGameModal = () => {
+    if (!showEndGameModal) return null;
+
+    const sortedPlayers = [...state.players].sort((a, b) => b.score - a.score);
+    const winner = sortedPlayers[0];
+
+    return (
+      <div 
+        className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4"
+        onClick={() => setShowEndGameModal(false)}
+      >
+        <div 
+          className="bg-[#faf8f5] rounded-xl shadow-xl max-w-sm w-full overflow-hidden"
+          onClick={e => e.stopPropagation()}
+        >
+          <div className="bg-[#1e3a5f] px-5 py-4">
+            <h2 className="text-lg font-bold text-[#f5f0e8]">End Game</h2>
+            <p className="text-[#f5f0e8]/70 text-sm">Game Summary</p>
+          </div>
+
+          <div className="p-5">
+            {/* Winner */}
+            <div className="text-center mb-4">
+              <div className="text-3xl mb-1">🏆</div>
+              <p className="text-[#1e3a5f] font-bold text-lg">{winner?.name || 'No winner'}</p>
+              <p className="text-[#1e3a5f]/60 text-sm">{winner?.score || 0} points</p>
+            </div>
+
+            {/* All Players */}
+            <div className="space-y-2 mb-4">
+              {sortedPlayers.map((player, index) => (
+                <div 
+                  key={player.id}
+                  className={`flex items-center justify-between p-2 rounded ${
+                    index === 0 ? 'bg-[#c4a882]/30' : 'bg-[#e8dfd2]'
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm">{index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`}</span>
+                    <span className="text-sm text-[#1e3a5f]">{player.name}</span>
+                  </div>
+                  <span className="font-bold text-[#1e3a5f]">{player.score}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Save to History (Pro only) */}
+            {isPro && (
+              <div className="bg-[#f5f0e8] rounded-lg p-3 mb-4">
+                <p className="text-xs text-[#1e3a5f]/70 text-center">
+                  ✨ Pro: This game will be saved to your history
+                </p>
+              </div>
+            )}
+          </div>
+
+          <div className="px-5 pb-5 space-y-2">
+            <button
+              onClick={() => handleEndGame(true)}
+              disabled={isSaving}
+              className="w-full py-2.5 px-4 bg-[#1e3a5f] hover:bg-[#162d4d] 
+                text-[#f5f0e8] font-bold rounded-lg transition-colors
+                disabled:opacity-50"
+            >
+              {isSaving ? 'Saving...' : isPro ? 'End & Save to History' : 'End Game'}
+            </button>
+            {isPro && (
+              <button
+                onClick={() => handleEndGame(false)}
+                className="w-full py-2 px-4 text-[#1e3a5f]/50 hover:text-[#1e3a5f] 
+                  text-sm transition-colors"
+              >
+                End without saving
+              </button>
+            )}
+            <button
+              onClick={() => setShowEndGameModal(false)}
+              className="w-full py-2 px-4 text-[#1e3a5f]/50 hover:text-[#1e3a5f] 
+                text-sm transition-colors"
+            >
+              Continue Playing
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
+    <>
+    <EndGameModal />
     <div className="bg-[#faf8f5] rounded-lg shadow-md p-3 space-y-3">
       {/* View Toggle */}
       <div className="flex rounded-md bg-[#e8dfd2] p-1">
@@ -236,6 +372,18 @@ export function GameControls({ viewMode, onViewModeChange }: GameControlsProps) 
           </div>
         </div>
       )}
+
+      {/* End Game Button */}
+      {state.players.length > 0 && state.players.some(p => p.words.length > 0) && (
+        <button
+          onClick={() => setShowEndGameModal(true)}
+          className="w-full py-2 px-3 bg-[#c4a882] hover:bg-[#b39872] 
+            text-[#1e3a5f] font-medium rounded-md transition-colors text-sm"
+        >
+          🏁 End Game
+        </button>
+      )}
     </div>
+    </>
   );
 }

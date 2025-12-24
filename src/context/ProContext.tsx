@@ -8,6 +8,8 @@ export interface ProSettings {
   dictionary: string; // 'en', 'de', 'fr', 'es'
   languages: string[]; // Multiple languages for mixed games
   customLetters: Record<string, { value: number; count: number }>;
+  timerEnabled: boolean;
+  timerMinutes: number; // Default turn timer in minutes
 }
 
 export interface GameHistoryEntry {
@@ -44,6 +46,8 @@ const defaultSettings: ProSettings = {
   dictionary: 'en',
   languages: ['en'],
   customLetters: {},
+  timerEnabled: false,
+  timerMinutes: 2, // Default 2 minutes per turn
 };
 
 const ProContext = createContext<ProContextType | undefined>(undefined);
