@@ -193,13 +193,13 @@ export function ProSettings({ isOpen, onClose }: ProSettingsProps) {
               </div>
               <button
                 onClick={() => setLocalSettings({ ...localSettings, timerEnabled: !localSettings.timerEnabled })}
-                className={`w-12 h-7 rounded-full transition-colors relative ${
+                className={`w-12 h-7 rounded-full transition-colors relative flex-shrink-0 ${
                   localSettings.timerEnabled ? 'bg-[#1e3a5f]' : 'bg-[#d4c4a8]'
                 }`}
               >
                 <span 
-                  className={`absolute top-1 w-5 h-5 bg-white rounded-full transition-transform ${
-                    localSettings.timerEnabled ? 'translate-x-6' : 'translate-x-1'
+                  className={`absolute top-1 left-1 w-5 h-5 bg-white rounded-full transition-transform shadow-sm ${
+                    localSettings.timerEnabled ? 'translate-x-5' : 'translate-x-0'
                   }`}
                 />
               </button>
@@ -237,24 +237,25 @@ export function ProSettings({ isOpen, onClose }: ProSettingsProps) {
             )}
           </div>
 
-          {/* Word Checker Toggle */}
-          <div className="flex items-center justify-between">
+          {/* Word Checker Toggle - Coming Soon */}
+          <div className="flex items-center justify-between opacity-50">
             <div>
-              <h3 className="font-medium text-[#1e3a5f]">Word Checker</h3>
+              <h3 className="font-medium text-[#1e3a5f] flex items-center gap-2">
+                Word Checker
+                <span className="text-[10px] px-1.5 py-0.5 bg-[#c4a882]/30 text-[#1e3a5f]/70 rounded-full font-medium">
+                  Soon
+                </span>
+              </h3>
               <p className="text-sm text-[#1e3a5f]/60">
                 Validate words against the dictionary
               </p>
             </div>
             <button
-              onClick={() => setLocalSettings({ ...localSettings, wordChecker: !localSettings.wordChecker })}
-              className={`w-12 h-7 rounded-full transition-colors relative ${
-                localSettings.wordChecker ? 'bg-[#1e3a5f]' : 'bg-[#d4c4a8]'
-              }`}
+              disabled
+              className="w-12 h-7 rounded-full transition-colors relative flex-shrink-0 bg-[#d4c4a8] cursor-not-allowed"
             >
               <span 
-                className={`absolute top-1 w-5 h-5 bg-white rounded-full transition-transform ${
-                  localSettings.wordChecker ? 'translate-x-6' : 'translate-x-1'
-                }`}
+                className="absolute top-1 left-1 w-5 h-5 bg-white rounded-full shadow-sm"
               />
             </button>
           </div>

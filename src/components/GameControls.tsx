@@ -178,41 +178,58 @@ export function GameControls({ viewMode, onViewModeChange }: GameControlsProps) 
   };
 
   const handleEndGame = async (saveToHistory: boolean) => {
-    if (saveToHistory && isPro) {
-      setIsSaving(true);
-      
-      // Calculate game duration
-      const durationMinutes = Math.round((Date.now() - gameStartTime) / 60000);
-      
-      // Find winner
-      const sortedPlayers = [...state.players].sort((a, b) => b.score - a.score);
-      const winner = sortedPlayers[0]?.name || null;
-      
-      // Calculate total turns
-      const totalTurns = state.players.reduce((sum, p) => sum + p.words.length, 0);
-      
-      // Format players data
-      const playersData = state.players.map(p => ({
-        name: p.name,
-        score: p.score,
-        words: p.words.map((w, i) => ({
-          word: w.word,
-          score: w.score,
-          turn: i + 1,
-        })),
-      }));
+    setIsSaving(true);
+    
+    // Calculate game duration
+    const durationMinutes = Math.round((Date.now() - gameStartTime) / 60000);
+    
+    // Find winner
+    const sortedPlayers = [...state.players].sort((a, b) => b.score - a.score);
+    const winner = sortedPlayers[0]?.name || null;
+    
+    // Calculate total turns
+    const totalTurns = state.players.reduce((sum, p) => sum + p.words.length, 0);
+    
+    // Format players data
+    const playersData = state.players.map(p => ({
+      name: p.name,
+      score: p.score,
+      words: p.words.map((w, i) => ({
+        word: w.word,
+        score: w.score,
+        turn: i + 1,
+      })),
+    }));
 
+    // Extract board state for history
+    const boardState: { letter: string; row: number; col: number }[] = [];
+    for (let row = 0; row < state.board.length; row++) {
+      for (let col = 0; col < state.board[row].length; col++) {
+        const tile = state.board[row][col];
+        if (tile && typeof tile === 'object' && 'letter' in tile) {
+          boardState.push({
+            letter: (tile as { letter: string }).letter,
+            row,
+            col,
+          });
+        }
+      }
+    }
+
+    // Always save to global stats (for all users)
+    // saveGame handles both global stats and Pro history
+    if (saveToHistory) {
       await saveGame({
         durationMinutes,
         players: playersData,
         winner,
         totalTurns,
         settings,
+        boardState,
       });
-      
-      setIsSaving(false);
     }
     
+    setIsSaving(false);
     setShowEndGameModal(false);
     dispatch({ type: 'FULL_NEW_GAME' });
   };

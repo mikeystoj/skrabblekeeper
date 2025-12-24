@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useGame } from '@/context/GameContext';
 import { BoardSquare } from './BoardSquare';
 import { LetterPicker } from '@/components/LetterPicker';
-import { BOARD_SIZE } from '@/lib/constants';
-import { Direction } from '@/lib/types';
+import { BOARD_SIZE, LETTER_VALUES, BOARD_LAYOUT, BINGO_BONUS } from '@/lib/constants';
+import { Direction, PlacedTile } from '@/lib/types';
 
 interface PreviewSquare {
   row: number;
@@ -13,11 +13,85 @@ interface PreviewSquare {
   letter?: string;
 }
 
+// Confetti component for Bingo celebration
+function BingoConfetti({ onComplete }: { onComplete: () => void }) {
+  useEffect(() => {
+    const timer = setTimeout(onComplete, 4000);
+    return () => clearTimeout(timer);
+  }, [onComplete]);
+
+  // Generate confetti pieces
+  const confettiPieces = useMemo(() => {
+    const pieces = [];
+    const colors = ['#1e3a5f', '#c4a882', '#f5f0e8', '#3d5a80', '#e8dfd2', '#ffd700', '#ff6b6b', '#4ecdc4'];
+    
+    for (let i = 0; i < 100; i++) {
+      pieces.push({
+        id: i,
+        left: Math.random() * 100,
+        delay: Math.random() * 0.5,
+        duration: 2 + Math.random() * 2,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        size: 6 + Math.random() * 8,
+        rotation: Math.random() * 360,
+      });
+    }
+    return pieces;
+  }, []);
+
+  return (
+    <div 
+      className="fixed inset-0 z-50 pointer-events-none overflow-hidden"
+      style={{ perspective: '1000px' }}
+    >
+      {/* Confetti pieces */}
+      {confettiPieces.map((piece) => (
+        <div
+          key={piece.id}
+          className="absolute animate-confetti-fall"
+          style={{
+            left: `${piece.left}%`,
+            top: '-20px',
+            width: `${piece.size}px`,
+            height: `${piece.size}px`,
+            backgroundColor: piece.color,
+            borderRadius: Math.random() > 0.5 ? '50%' : '2px',
+            transform: `rotate(${piece.rotation}deg)`,
+            animationDelay: `${piece.delay}s`,
+            animationDuration: `${piece.duration}s`,
+          }}
+        />
+      ))}
+      
+      {/* Center celebration message */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-auto">
+        <div 
+          className="bg-[#1e3a5f] text-[#f5f0e8] px-8 py-6 rounded-2xl shadow-2xl 
+            animate-bounce-in text-center transform"
+          onClick={onComplete}
+        >
+          <div className="text-4xl mb-2">🎉</div>
+          <h2 className="text-2xl font-bold mb-1">LEGENDARY!</h2>
+          <p className="text-[#c4a882] font-medium">All 7 letters used!</p>
+          <p className="text-[#f5f0e8]/70 text-sm mt-2">+{BINGO_BONUS} bonus points</p>
+          <button 
+            className="mt-4 px-4 py-2 bg-[#c4a882] hover:bg-[#b39872] text-[#1e3a5f] 
+              font-bold rounded-lg transition-colors text-sm"
+          >
+            LETS GO!
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function Board() {
   const { state, dispatch } = useGame();
   const [selectedSquare, setSelectedSquare] = useState<{ row: number; col: number } | null>(null);
   const [previewWord, setPreviewWord] = useState('');
   const [previewDirection, setPreviewDirection] = useState<Direction>('horizontal');
+  const [showBingoCelebration, setShowBingoCelebration] = useState(false);
 
   // Calculate preview squares based on current input in the letter picker
   const previewSquares = useMemo((): PreviewSquare[] => {
@@ -91,8 +165,204 @@ export function Board() {
     setPreviewDirection('horizontal');
   };
 
+  // Helper to check if a letter is a blank tile (lowercase = blank)
+  const isBlankTile = (letter: string) => letter === letter.toLowerCase() && letter !== letter.toUpperCase();
+
+  // Calculate score for placed tiles including board multipliers and perpendicular words
+  const calculatePlacedWordScore = (
+    word: string, 
+    startRow: number, 
+    startCol: number, 
+    dir: Direction
+  ): { totalScore: number; wordDisplay: string; isBingo: boolean } => {
+    // Build the tiles that will be placed
+    const newTiles: { letter: string; row: number; col: number; isNew: boolean }[] = [];
+    let row = startRow;
+    let col = startCol;
+    
+    for (const letter of word) {
+      if (row >= BOARD_SIZE || col >= BOARD_SIZE) break;
+      
+      // Check if there's an existing tile
+      const existingTile = state.board[row][col];
+      
+      if (existingTile) {
+        // Existing tile - include in word but not as new
+        newTiles.push({
+          letter: (existingTile as PlacedTile).letter,
+          row,
+          col,
+          isNew: false,
+        });
+      } else {
+        // New tile
+        newTiles.push({
+          letter,
+          row,
+          col,
+          isNew: true,
+        });
+      }
+      
+      if (dir === 'horizontal') {
+        col++;
+      } else {
+        row++;
+      }
+    }
+
+    // Calculate main word score
+    let mainWordScore = 0;
+    let wordMultiplier = 1;
+    
+    for (const tile of newTiles) {
+      const letterValue = isBlankTile(tile.letter) ? 0 : (LETTER_VALUES[tile.letter.toUpperCase()] || 0);
+      
+      if (tile.isNew) {
+        const multiplier = BOARD_LAYOUT[tile.row]?.[tile.col];
+        switch (multiplier) {
+          case 'DL':
+            mainWordScore += letterValue * 2;
+            break;
+          case 'TL':
+            mainWordScore += letterValue * 3;
+            break;
+          case 'DW':
+          case 'STAR':
+            mainWordScore += letterValue;
+            wordMultiplier *= 2;
+            break;
+          case 'TW':
+            mainWordScore += letterValue;
+            wordMultiplier *= 3;
+            break;
+          default:
+            mainWordScore += letterValue;
+        }
+      } else {
+        mainWordScore += letterValue;
+      }
+    }
+    
+    mainWordScore *= wordMultiplier;
+
+    // Find perpendicular words
+    const perpDirection = dir === 'horizontal' ? 'vertical' : 'horizontal';
+    const perpWords: { word: string; score: number }[] = [];
+    
+    for (const tile of newTiles) {
+      if (!tile.isNew) continue; // Only check new tiles for perpendicular words
+      
+      // Find start of perpendicular word
+      let perpStartRow = tile.row;
+      let perpStartCol = tile.col;
+      
+      if (perpDirection === 'horizontal') {
+        while (perpStartCol > 0 && state.board[perpStartRow][perpStartCol - 1]) {
+          perpStartCol--;
+        }
+      } else {
+        while (perpStartRow > 0 && state.board[perpStartRow - 1][perpStartCol]) {
+          perpStartRow--;
+        }
+      }
+      
+      // Build perpendicular word
+      const perpTiles: { letter: string; row: number; col: number; isNew: boolean }[] = [];
+      let pRow = perpStartRow;
+      let pCol = perpStartCol;
+      
+      while (pRow < BOARD_SIZE && pCol < BOARD_SIZE) {
+        // Check if this is the new tile position
+        if (pRow === tile.row && pCol === tile.col) {
+          perpTiles.push({ ...tile });
+        } else {
+          const existingTile = state.board[pRow][pCol] as PlacedTile | null;
+          if (!existingTile) break;
+          perpTiles.push({
+            letter: existingTile.letter,
+            row: pRow,
+            col: pCol,
+            isNew: false,
+          });
+        }
+        
+        if (perpDirection === 'horizontal') {
+          pCol++;
+        } else {
+          pRow++;
+        }
+      }
+      
+      // Only count if perpendicular word has 2+ letters
+      if (perpTiles.length >= 2) {
+        let perpScore = 0;
+        let perpMultiplier = 1;
+        
+        for (const pTile of perpTiles) {
+          const letterValue = isBlankTile(pTile.letter) ? 0 : (LETTER_VALUES[pTile.letter.toUpperCase()] || 0);
+          
+          if (pTile.isNew) {
+            const multiplier = BOARD_LAYOUT[pTile.row]?.[pTile.col];
+            switch (multiplier) {
+              case 'DL':
+                perpScore += letterValue * 2;
+                break;
+              case 'TL':
+                perpScore += letterValue * 3;
+                break;
+              case 'DW':
+              case 'STAR':
+                perpScore += letterValue;
+                perpMultiplier *= 2;
+                break;
+              case 'TW':
+                perpScore += letterValue;
+                perpMultiplier *= 3;
+                break;
+              default:
+                perpScore += letterValue;
+            }
+          } else {
+            perpScore += letterValue;
+          }
+        }
+        
+        perpScore *= perpMultiplier;
+        const perpWord = perpTiles.map(t => t.letter.toUpperCase()).join('');
+        perpWords.push({ word: perpWord, score: perpScore });
+      }
+    }
+    
+    // Calculate total
+    let totalScore = mainWordScore + perpWords.reduce((sum, w) => sum + w.score, 0);
+    
+    // Check for bingo (7 tiles placed)
+    const newTileCount = newTiles.filter(t => t.isNew).length;
+    const isBingo = newTileCount === 7;
+    if (isBingo) {
+      totalScore += BINGO_BONUS;
+    }
+    
+    // Build word display
+    const mainWord = newTiles.map(t => t.letter.toUpperCase()).join('');
+    const allWords = [mainWord, ...perpWords.map(w => w.word)];
+    const wordDisplay = allWords.join(' + ');
+    
+    return { totalScore, wordDisplay, isBingo };
+  };
+
   const handlePlaceWord = (word: string, direction: Direction) => {
     if (selectedSquare) {
+      // Calculate score before placing
+      const { totalScore, wordDisplay, isBingo } = calculatePlacedWordScore(
+        word, 
+        selectedSquare.row, 
+        selectedSquare.col, 
+        direction
+      );
+      
+      // Place the word (adds to pending tiles)
       dispatch({
         type: 'PLACE_WORD',
         startRow: selectedSquare.row,
@@ -100,6 +370,22 @@ export function Board() {
         word,
         direction,
       });
+      
+      // Show bingo celebration if 7 tiles used
+      if (isBingo) {
+        setShowBingoCelebration(true);
+      }
+      
+      // Immediately submit the word (commits tiles and moves to next player)
+      // Use setTimeout to ensure PLACE_WORD is processed first
+      setTimeout(() => {
+        dispatch({
+          type: 'SUBMIT_WORD',
+          word: wordDisplay,
+          score: totalScore,
+        });
+      }, 0);
+      
       setSelectedSquare(null);
       setPreviewWord('');
     }
@@ -129,6 +415,11 @@ export function Board() {
 
   return (
     <div className="relative">
+      {/* Bingo Celebration */}
+      {showBingoCelebration && (
+        <BingoConfetti onComplete={() => setShowBingoCelebration(false)} />
+      )}
+
       {/* Board Grid */}
       <div 
         className="grid gap-0.5 sm:gap-1 p-2 sm:p-3 bg-[#1e3a5f] rounded-lg shadow-lg mx-auto"
@@ -206,8 +497,10 @@ function LetterPickerWithPreview({
 }
 
 // Enhanced LetterPicker with preview callback
-import { useState as useStateEnhanced, useEffect, useRef, useCallback, useMemo as useMemoEnhanced } from 'react';
-import { ALPHABET, LETTER_VALUES } from '@/lib/constants';
+import { useState as useStateEnhanced, useEffect as useEffectEnhanced, useRef, useCallback, useMemo as useMemoEnhanced } from 'react';
+import { ALPHABET } from '@/lib/constants';
+import { usePro } from '@/context/ProContext';
+import { LANGUAGE_CONFIGS } from '@/components/ProSettings';
 
 interface LetterPickerEnhancedProps {
   startRow: number;
@@ -238,11 +531,36 @@ function LetterPickerEnhanced({
   onClose,
   onPreviewUpdate,
 }: LetterPickerEnhancedProps) {
+  const { isPro, settings } = usePro();
   const [word, setWord] = useStateEnhanced('');
   const [direction, setDirection] = useStateEnhanced<Direction>('horizontal');
   const [showBlankPicker, setShowBlankPicker] = useStateEnhanced(false);
   const modalRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Build custom letters from selected languages
+  const customLetters: Record<string, { value: number; count: number }> = useMemoEnhanced(() => {
+    const letters: Record<string, { value: number; count: number }> = {};
+    
+    if (isPro && settings.languages && settings.languages.length > 0) {
+      settings.languages.forEach(lang => {
+        const config = LANGUAGE_CONFIGS[lang];
+        if (config?.customLetters) {
+          Object.assign(letters, config.customLetters);
+        }
+      });
+    }
+    
+    // Also merge any directly stored custom letters from settings
+    if (isPro && settings.customLetters) {
+      Object.assign(letters, settings.customLetters);
+    }
+    
+    return letters;
+  }, [isPro, settings.languages, settings.customLetters]);
+  
+  const customLettersList = Object.keys(customLetters);
+  const hasCustomLetters = customLettersList.length > 0;
 
   // Check if the board is empty (first move)
   const isBoardEmpty = useMemoEnhanced(() => {
@@ -402,17 +720,17 @@ function LetterPickerEnhanced({
   const hasPlacementError = !connectsToBoard || !coversCenter;
 
   // Update preview whenever word or direction changes
-  useEffect(() => {
+  useEffectEnhanced(() => {
     onPreviewUpdate(word, direction);
   }, [word, direction, onPreviewUpdate]);
 
   // Focus input on mount
-  useEffect(() => {
+  useEffectEnhanced(() => {
     inputRef.current?.focus();
   }, []);
 
   // Close on escape key
-  useEffect(() => {
+  useEffectEnhanced(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         if (showBlankPicker) {
@@ -428,7 +746,7 @@ function LetterPickerEnhanced({
   }, [onClose, showBlankPicker]);
 
   // Close on click outside
-  useEffect(() => {
+  useEffectEnhanced(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
         onClose();
@@ -440,10 +758,17 @@ function LetterPickerEnhanced({
   }, [onClose]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Only allow uppercase letters (lowercase reserved for blank tiles added via picker)
-    const value = e.target.value.toUpperCase().replace(/[^A-Z]/g, '');
+    // Allow uppercase letters and custom letters
+    const validChars = new Set([...ALPHABET, ...customLettersList]);
+    const value = e.target.value.toUpperCase();
+    let filtered = '';
+    for (const char of value) {
+      if (validChars.has(char)) {
+        filtered += char;
+      }
+    }
     const maxLength = direction === 'horizontal' ? horizontalSpaces : verticalSpaces;
-    setWord(value.slice(0, maxLength));
+    setWord(filtered.slice(0, maxLength));
   };
 
   const handleLetterClick = (letter: string) => {
@@ -494,6 +819,15 @@ function LetterPickerEnhanced({
     }
   };
 
+  // Get letter value (check custom letters first, then standard)
+  const getLetterValue = (letter: string): number => {
+    const upperLetter = letter.toUpperCase();
+    if (customLetters[upperLetter]) {
+      return customLetters[upperLetter].value;
+    }
+    return LETTER_VALUES[upperLetter] || 0;
+  };
+
   // Calculate score preview (blank tiles = lowercase = 0 points)
   const calculatePreviewScore = (): number => {
     let score = 0;
@@ -502,7 +836,7 @@ function LetterPickerEnhanced({
       if (isBlankTile(letter)) {
         score += 0;
       } else {
-        score += LETTER_VALUES[letter] || 0;
+        score += getLetterValue(letter);
       }
     }
     return score;
@@ -604,7 +938,7 @@ function LetterPickerEnhanced({
                     >
                       {letter.toUpperCase()}
                       <span className="absolute bottom-0 right-0.5 text-[7px] opacity-60">
-                        {isBlank ? '0' : LETTER_VALUES[letter]}
+                        {isBlank ? '0' : getLetterValue(letter)}
                       </span>
                     </div>
                   );
@@ -656,6 +990,23 @@ function LetterPickerEnhanced({
                 {letter}
                 <span className="absolute bottom-0 right-0.5 text-[6px] opacity-50">
                   {LETTER_VALUES[letter]}
+                </span>
+              </button>
+            ))}
+            {/* Custom letters (German, French, Spanish, etc.) */}
+            {hasCustomLetters && customLettersList.map((letter) => (
+              <button
+                key={letter}
+                onClick={() => handleLetterClick(letter)}
+                disabled={word.length >= maxLength}
+                className="relative aspect-square flex items-center justify-center 
+                  bg-[#1e3a5f] hover:bg-[#162d4d] disabled:opacity-40
+                  text-[#f5f0e8] font-bold text-sm
+                  rounded transition-all"
+              >
+                {letter}
+                <span className="absolute bottom-0 right-0.5 text-[6px] opacity-80">
+                  {customLetters[letter]?.value || 0}
                 </span>
               </button>
             ))}
@@ -736,6 +1087,19 @@ function LetterPickerEnhanced({
                       bg-stone-100 hover:bg-stone-300 
                       text-stone-700 font-bold text-sm
                       rounded transition-all border border-stone-300"
+                  >
+                    {letter}
+                  </button>
+                ))}
+                {/* Custom letters for blank tiles */}
+                {hasCustomLetters && customLettersList.map((letter) => (
+                  <button
+                    key={letter}
+                    onClick={() => handleBlankLetterSelect(letter)}
+                    className="aspect-square flex items-center justify-center 
+                      bg-[#1e3a5f] hover:bg-[#162d4d] 
+                      text-[#f5f0e8] font-bold text-sm
+                      rounded transition-all"
                   >
                     {letter}
                   </button>

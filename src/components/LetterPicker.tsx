@@ -10,8 +10,6 @@ import {
   ArrowRightIcon,
   ArrowDownIcon,
   BackspaceIcon,
-  CheckIcon,
-  PlusIcon,
 } from '@heroicons/react/24/outline';
 
 interface LetterPickerProps {
@@ -36,13 +34,37 @@ export function LetterPicker({
   const [word, setWord] = useState('');
   const [direction, setDirection] = useState<Direction>('horizontal');
   const [showBlankPicker, setShowBlankPicker] = useState(false);
-  const [showCustomLetters, setShowCustomLetters] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Get custom letters from selected languages
-  const customLetters = isPro ? settings.customLetters || {} : {};
+  // Build custom letters from LANGUAGE_CONFIGS based on selected languages
+  const customLetters: Record<string, { value: number; count: number }> = {};
+  
+  if (isPro && settings.languages && settings.languages.length > 0) {
+    settings.languages.forEach(lang => {
+      const config = LANGUAGE_CONFIGS[lang];
+      if (config?.customLetters) {
+        Object.assign(customLetters, config.customLetters);
+      }
+    });
+  }
+  
+  // Also merge any directly stored custom letters from settings
+  if (isPro && settings.customLetters) {
+    Object.assign(customLetters, settings.customLetters);
+  }
+  
   const hasCustomLetters = Object.keys(customLetters).length > 0;
+  
+  // Debug log - remove after testing
+  console.log('LetterPicker Debug:', { 
+    isPro, 
+    languages: settings.languages, 
+    customLettersFromSettings: settings.customLetters,
+    builtCustomLetters: customLetters,
+    hasCustomLetters 
+  });
 
   // Get all available letters (standard + custom)
   const allLetters = [...ALPHABET];
@@ -80,8 +102,6 @@ export function LetterPicker({
       if (e.key === 'Escape') {
         if (showBlankPicker) {
           setShowBlankPicker(false);
-        } else if (showCustomLetters) {
-          setShowCustomLetters(false);
         } else {
           onClose();
         }
@@ -90,7 +110,7 @@ export function LetterPicker({
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [onClose, showBlankPicker, showCustomLetters]);
+  }, [onClose, showBlankPicker]);
 
   // Close on click outside
   useEffect(() => {
@@ -297,25 +317,9 @@ export function LetterPicker({
 
         {/* Letter Grid */}
         <div className="mb-4">
-          <div className="flex items-center justify-between mb-2">
-            <label className="text-sm font-medium text-gray-600">
-              Or click letters below
-            </label>
-            {/* Custom Letters Toggle (Pro only) */}
-            {isPro && hasCustomLetters && (
-              <button
-                onClick={() => setShowCustomLetters(!showCustomLetters)}
-                className={`text-xs px-2 py-1 rounded-lg transition-colors flex items-center gap-1 ${
-                  showCustomLetters 
-                    ? 'bg-amber-500 text-white' 
-                    : 'bg-amber-100 text-amber-700 hover:bg-amber-200'
-                }`}
-              >
-                {showCustomLetters ? <CheckIcon className="w-3 h-3" /> : <PlusIcon className="w-3 h-3" />}
-                <span>{getActiveLanguages().join(', ')}</span>
-              </button>
-            )}
-          </div>
+          <label className="text-sm font-medium text-gray-600 block mb-2">
+            Or click letters below
+          </label>
           
           <div className="grid grid-cols-9 gap-1.5">
             {allLetters.map((letter) => (
@@ -333,6 +337,24 @@ export function LetterPicker({
                 {letter}
                 <span className="absolute bottom-0 right-0.5 text-[7px] opacity-60">
                   {LETTER_VALUES[letter]}
+                </span>
+              </button>
+            ))}
+            {/* Custom letters inline after Z */}
+            {hasCustomLetters && customLettersList.map((letter) => (
+              <button
+                key={letter}
+                onClick={() => handleLetterClick(letter)}
+                disabled={word.length >= maxLength}
+                className="relative aspect-square flex items-center justify-center 
+                  bg-[#1e3a5f] hover:bg-[#162d4d] disabled:bg-gray-100 disabled:text-gray-400
+                  text-[#f5f0e8] font-bold text-sm
+                  rounded-md transition-all duration-150 hover:scale-105 shadow-sm
+                  border border-[#1e3a5f] disabled:border-gray-200"
+              >
+                {letter}
+                <span className="absolute bottom-0 right-0.5 text-[7px] opacity-80">
+                  {customLetters[letter]?.value || 0}
                 </span>
               </button>
             ))}
@@ -368,32 +390,11 @@ export function LetterPicker({
             </button>
           </div>
 
-          {/* Custom Letters Grid (Pro only) */}
-          {isPro && hasCustomLetters && showCustomLetters && (
-            <div className="mt-3 p-3 bg-amber-50 rounded-lg border border-amber-200">
-              <p className="text-xs text-amber-700 mb-2 font-medium">
-                Special Characters ({getActiveLanguages().join(', ')})
-              </p>
-              <div className="grid grid-cols-9 gap-1.5">
-                {customLettersList.map((letter) => (
-                  <button
-                    key={letter}
-                    onClick={() => handleLetterClick(letter)}
-                    disabled={word.length >= maxLength}
-                    className="relative aspect-square flex items-center justify-center 
-                      bg-amber-300 hover:bg-amber-400 disabled:bg-gray-100 disabled:text-gray-400
-                      text-amber-900 font-bold text-sm
-                      rounded-md transition-all duration-150 hover:scale-105 shadow-sm
-                      border border-amber-500 disabled:border-gray-200"
-                  >
-                    {letter}
-                    <span className="absolute bottom-0 right-0.5 text-[7px] opacity-60">
-                      {customLetters[letter].value}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
+          {/* Language indicator */}
+          {hasCustomLetters && (
+            <p className="text-xs text-[#1e3a5f]/60 mt-2">
+              🌍 {getActiveLanguages().join(', ')} letters available
+            </p>
           )}
         </div>
 

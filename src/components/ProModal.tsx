@@ -25,14 +25,14 @@ export function ProModal({ isOpen, onClose }: ProModalProps) {
 
   if (!isOpen) return null;
 
-  const features = [
-    'Dictionary validation with official Scrabble dictionaries',
-    'Game history and personal stats tracking',
-    'Predictive word helper suggestions (coming soon)',
-    'Saved player names for quick selection',
-    'Multi-lingual support (EN, ES, FR, DE)',
-    'Turn timer for competitive play',
-    'No future ads'
+  const features: { text: string; comingSoon?: boolean }[] = [
+    { text: 'Dictionary validation with official Scrabble dictionaries', comingSoon: true },
+    { text: 'Game history and personal stats tracking' },
+    { text: 'Predictive word helper suggestions', comingSoon: true },
+    { text: 'Saved player names for quick selection' },
+    { text: 'Multi-lingual support (EN, ES, FR, DE)' },
+    { text: 'Turn timer for competitive play' },
+    { text: 'No future ads' },
   ];
 
   const handlePurchase = async () => {
@@ -116,33 +116,52 @@ export function ProModal({ isOpen, onClose }: ProModalProps) {
         onClick={resetAndClose}
       >
         <div 
-          className="bg-[#faf8f5] rounded-xl shadow-xl max-w-sm w-full overflow-hidden"
+          className="bg-[#faf8f5] rounded-xl shadow-xl max-w-sm w-full overflow-hidden max-h-[90vh] overflow-y-auto"
           onClick={e => e.stopPropagation()}
         >
-          <div className="bg-[#1e3a5f] px-5 py-4">
+          <div className="bg-[#1e3a5f] px-5 py-4 sticky top-0 z-10">
             <div className="flex items-center gap-2">
               <SparklesIcon className="w-5 h-5 text-[#c4a882]" />
               <h2 className="text-lg font-bold text-[#f5f0e8]">Keeper Pro Active</h2>
             </div>
-          </div>
-
-          <div className="p-5 text-center">
-            <SparklesIcon className="w-12 h-12 text-[#c4a882] mx-auto mb-3" />
-            <p className="text-[#1e3a5f] font-medium mb-1">You have Pro access!</p>
-            <p className="text-sm text-[#1e3a5f]/60 mb-4">
+            <p className="text-sm text-[#f5f0e8]/60 mt-1">
               Licensed to: {licenseEmail}
             </p>
+          </div>
+
+          <div className="p-5">
+            {/* Features included */}
+            <div className="mb-4">
+              <p className="text-xs font-medium text-[#1e3a5f]/50 uppercase tracking-wide mb-3">
+                Your Pro Features
+              </p>
+              <ul className="space-y-2">
+                {features.map((feature, index) => (
+                  <li key={index} className="flex items-start gap-2 text-sm text-[#1e3a5f]">
+                    <CheckIcon className="w-4 h-4 text-[#3d5a80] mt-0.5 flex-shrink-0" />
+                    <span className="flex items-center gap-2 flex-wrap">
+                      {feature.text}
+                      {feature.comingSoon && (
+                        <span className="text-[10px] px-1.5 py-0.5 bg-[#c4a882]/30 text-[#1e3a5f]/70 rounded-full font-medium">
+                          Soon
+                        </span>
+                      )}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
 
             <div className="bg-[#f5f0e8] rounded-lg p-3 mb-4">
-              <p className="text-xs text-[#1e3a5f]/70">
-                Pro features are now enabled across all your games.
+              <p className="text-xs text-[#1e3a5f]/70 text-center">
+                Access Pro Settings from the header menu to customize your experience.
               </p>
             </div>
 
             <button
               onClick={handleDeactivate}
-              className="text-sm text-[#1e3a5f]/40 hover:text-[#1e3a5f]/60 
-                transition-colors mb-3"
+              className="w-full text-sm text-[#1e3a5f]/40 hover:text-[#1e3a5f]/60 
+                transition-colors py-2"
             >
               Deactivate on this device
             </button>
@@ -151,8 +170,8 @@ export function ProModal({ isOpen, onClose }: ProModalProps) {
           <div className="px-5 pb-5">
             <button
               onClick={resetAndClose}
-              className="w-full py-2 px-4 text-[#1e3a5f]/50 hover:text-[#1e3a5f] 
-                text-sm transition-colors"
+              className="w-full py-2.5 px-4 bg-[#1e3a5f] hover:bg-[#162d4d] 
+                text-[#f5f0e8] font-medium rounded-lg transition-colors"
             >
               Close
             </button>
@@ -320,7 +339,14 @@ export function ProModal({ isOpen, onClose }: ProModalProps) {
             {features.map((feature, index) => (
               <li key={index} className="flex items-start gap-2 text-sm text-[#1e3a5f]">
                 <CheckIcon className="w-4 h-4 text-[#3d5a80] mt-0.5 flex-shrink-0" />
-                <span>{feature}</span>
+                <span className="flex items-center gap-2 flex-wrap">
+                  {feature.text}
+                  {feature.comingSoon && (
+                    <span className="text-[10px] px-1.5 py-0.5 bg-[#c4a882]/30 text-[#1e3a5f]/70 rounded-full font-medium">
+                      Soon
+                    </span>
+                  )}
+                </span>
               </li>
             ))}
           </ul>

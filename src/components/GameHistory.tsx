@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { usePro, GameHistoryEntry } from '@/context/ProContext';
 import {
   TrophyIcon,
   ChartBarIcon,
 } from '@heroicons/react/24/outline';
+import { BOARD_LAYOUT } from '@/lib/constants';
 
 interface GameHistoryProps {
   isOpen: boolean;
@@ -31,7 +32,68 @@ function formatDuration(minutes: number | null): string {
   return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
 }
 
+// Mini board component for game history - matches main board color palette
+function MiniBoard({ boardState }: { boardState: { letter: string; row: number; col: number }[] | null }) {
+  if (!boardState || boardState.length === 0) {
+    return (
+      <div className="text-xs text-[#1e3a5f]/40 text-center py-4">
+        No board data available
+      </div>
+    );
+  }
+
+  // Create a 15x15 grid
+  const grid: (string | null)[][] = Array(15).fill(null).map(() => Array(15).fill(null));
+  
+  // Fill in the letters
+  for (const tile of boardState) {
+    if (tile.row >= 0 && tile.row < 15 && tile.col >= 0 && tile.col < 15) {
+      grid[tile.row][tile.col] = tile.letter;
+    }
+  }
+
+  // Get multiplier styling for empty squares - matches MULTIPLIER_COLORS from constants
+  const getMultiplierStyle = (row: number, col: number): string => {
+    const multiplier = BOARD_LAYOUT[row]?.[col];
+    switch (multiplier) {
+      case 'TW': return 'bg-[#1e3a5f]'; // Navy - Triple Word
+      case 'DW': return 'bg-[#3d5a80]'; // Lighter Navy - Double Word
+      case 'TL': return 'bg-[#8b7355]'; // Brown - Triple Letter
+      case 'DL': return 'bg-[#a69076]'; // Tan - Double Letter
+      case 'STAR': return 'bg-[#3d5a80]'; // Lighter Navy - Center Star
+      default: return 'bg-[#404f71]'; // Default dark tile
+    }
+  };
+
+  return (
+    <div 
+      className="grid gap-[1px] p-1.5 bg-[#1e3a5f] rounded-md shadow-md"
+      style={{ 
+        gridTemplateColumns: 'repeat(15, 1fr)',
+        width: '100%',
+        maxWidth: '180px',
+      }}
+    >
+      {grid.map((row, rowIndex) =>
+        row.map((letter, colIndex) => (
+          <div
+            key={`${rowIndex}-${colIndex}`}
+            className={`aspect-square flex items-center justify-center text-[5px] font-bold rounded-[1px]
+              ${letter 
+                ? 'bg-[#f5f0e8] text-[#1e3a5f] shadow-sm' 
+                : getMultiplierStyle(rowIndex, colIndex)
+              }`}
+          >
+            {letter?.toUpperCase() || ''}
+          </div>
+        ))
+      )}
+    </div>
+  );
+}
+
 function GameCard({ game }: { game: GameHistoryEntry }) {
+  const [showBoard, setShowBoard] = useState(false);
   const sortedPlayers = [...game.players].sort((a, b) => b.score - a.score);
   const winner = sortedPlayers[0];
 
@@ -59,33 +121,61 @@ function GameCard({ game }: { game: GameHistoryEntry }) {
         )}
       </div>
 
-      {/* Players */}
+      {/* Content: Players + Mini Board */}
       <div className="p-4">
-        <div className="space-y-2">
-          {sortedPlayers.map((player, index) => (
-            <div 
-              key={index}
-              className={`flex items-center justify-between p-2 rounded ${
-                index === 0 ? 'bg-[#c4a882]/20' : ''
-              }`}
-            >
-              <div className="flex items-center gap-2">
-                {index === 0 && <TrophyIcon className="w-4 h-4 text-yellow-500" />}
-                <span className={`text-sm ${index === 0 ? 'font-bold' : ''} text-[#1e3a5f]`}>
-                  {player.name}
-                </span>
+        <div className="flex gap-4">
+          {/* Players list */}
+          <div className="flex-1 space-y-2">
+            {sortedPlayers.map((player, index) => (
+              <div 
+                key={index}
+                className={`flex items-center justify-between p-2 rounded ${
+                  index === 0 ? 'bg-[#c4a882]/20' : ''
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  {index === 0 && <TrophyIcon className="w-4 h-4 text-yellow-500" />}
+                  <span className={`text-sm ${index === 0 ? 'font-bold' : ''} text-[#1e3a5f]`}>
+                    {player.name}
+                  </span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-xs text-[#1e3a5f]/50">
+                    {player.words.length} words
+                  </span>
+                  <span className={`font-bold ${index === 0 ? 'text-[#1e3a5f]' : 'text-[#1e3a5f]/70'}`}>
+                    {player.score}
+                  </span>
+                </div>
               </div>
-              <div className="flex items-center gap-3">
-                <span className="text-xs text-[#1e3a5f]/50">
-                  {player.words.length} words
-                </span>
-                <span className={`font-bold ${index === 0 ? 'text-[#1e3a5f]' : 'text-[#1e3a5f]/70'}`}>
-                  {player.score}
-                </span>
-              </div>
+            ))}
+          </div>
+
+          {/* Mini Board Preview (always visible if board data exists) */}
+          {game.boardState && game.boardState.length > 0 && (
+            <div className="flex-shrink-0">
+              <MiniBoard boardState={game.boardState} />
             </div>
-          ))}
+          )}
         </div>
+
+        {/* Toggle to show/hide board on mobile or if no inline board */}
+        {game.boardState && game.boardState.length > 0 && (
+          <button
+            onClick={() => setShowBoard(!showBoard)}
+            className="mt-3 text-xs text-[#1e3a5f]/60 hover:text-[#1e3a5f] 
+              transition-colors underline sm:hidden"
+          >
+            {showBoard ? 'Hide board' : 'Show board'}
+          </button>
+        )}
+
+        {/* Expanded board view for mobile */}
+        {showBoard && game.boardState && (
+          <div className="mt-3 flex justify-center sm:hidden">
+            <MiniBoard boardState={game.boardState} />
+          </div>
+        )}
 
         {/* Top words preview */}
         {winner.words.length > 0 && (

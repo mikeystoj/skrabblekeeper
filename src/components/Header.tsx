@@ -98,7 +98,7 @@ function InstallPrompt({ onClose }: { onClose: () => void }) {
 function ProDropdown({ 
   onSettings, 
   onHistory,
-  onManageLicense 
+  onManageLicense,
 }: { 
   onSettings: () => void;
   onHistory: () => void;

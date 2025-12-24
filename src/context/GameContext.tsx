@@ -196,6 +196,12 @@ function gameReducer(state: GameState, action: GameAction): GameState {
     }
 
     case 'START_GAME': {
+      // Track game start in global stats (fire and forget)
+      if (typeof window !== 'undefined') {
+        fetch('/api/stats', { method: 'PATCH' }).catch(() => {
+          // Silently fail - don't block game start
+        });
+      }
       return { ...state, gameStarted: true };
     }
 

@@ -19,8 +19,15 @@ export async function sendLicenseEmail(
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const resend = getResend();
-    await resend.emails.send({
-      from: 'Skrabble Keeper <onboarding@resend.dev>',
+    
+    // Use verified domain email
+    const fromEmail = process.env.RESEND_FROM_EMAIL || 'Skrabble Keeper <noreply@mail.skrabblekeeper.com>';
+    
+    console.log('Sending license email to:', email);
+    console.log('From:', fromEmail);
+    
+    const result = await resend.emails.send({
+      from: fromEmail,
       to: email,
       subject: 'Your Skrabble Keeper Pro License Key 🎉',
       html: `
@@ -91,10 +98,18 @@ export async function sendLicenseEmail(
         </html>
       `,
     });
+    
+    console.log('Email send result:', result);
 
     return { success: true };
   } catch (error) {
     console.error('Failed to send email:', error);
+    // Log more details about the error
+    if (error instanceof Error) {
+      console.error('Error name:', error.name);
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
+    }
     return { 
       success: false, 
       error: error instanceof Error ? error.message : 'Failed to send email' 

@@ -25,6 +25,7 @@ export interface GameHistoryEntry {
   winner: string | null;
   totalTurns: number | null;
   settings: ProSettings | null;
+  boardState: { letter: string; row: number; col: number }[] | null;
 }
 
 interface ProContextType {
@@ -142,6 +143,19 @@ export function ProProvider({ children }: { children: ReactNode }) {
   };
 
   const saveGame = async (gameData: Omit<GameHistoryEntry, 'id' | 'playedAt'>) => {
+    // Always update global stats, even for non-Pro users
+    try {
+      await fetch('/api/stats', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(gameData),
+      });
+    } catch (statsError) {
+      console.error('Failed to update global stats:', statsError);
+      // Don't block game save if stats fail
+    }
+
+    // Only save to personal history if Pro
     if (!licenseKey) return;
 
     try {
@@ -156,6 +170,7 @@ export function ProProvider({ children }: { children: ReactNode }) {
           winner: gameData.winner,
           total_turns: gameData.totalTurns,
           settings: gameData.settings,
+          board_state: gameData.boardState,
         });
 
       if (error) {
@@ -192,6 +207,7 @@ export function ProProvider({ children }: { children: ReactNode }) {
           winner: string | null;
           total_turns: number | null;
           settings: ProSettings | null;
+          board_state: GameHistoryEntry['boardState'];
         }) => ({
           id: game.id,
           playedAt: game.played_at,
@@ -200,6 +216,7 @@ export function ProProvider({ children }: { children: ReactNode }) {
           winner: game.winner,
           totalTurns: game.total_turns,
           settings: game.settings,
+          boardState: game.board_state,
         }));
         setGameHistory(history);
       }
