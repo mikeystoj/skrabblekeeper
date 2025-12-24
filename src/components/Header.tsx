@@ -9,87 +9,18 @@ import { ProModal } from './ProModal';
 import { InfoModal } from './InfoModal';
 import { ProSettings } from './ProSettings';
 import { GameHistory } from './GameHistory';
-
-// Info icon component
-function InfoIcon({ className }: { className?: string }) {
-  return (
-    <svg 
-      className={className}
-      width="18" 
-      height="18" 
-      viewBox="0 0 24 24" 
-      fill="none" 
-      stroke="currentColor" 
-      strokeWidth="2" 
-      strokeLinecap="round" 
-      strokeLinejoin="round"
-    >
-      <circle cx="12" cy="12" r="10" />
-      <path d="M12 16v-4" />
-      <path d="M12 8h.01" />
-    </svg>
-  );
-}
-
-// Menu icon for mobile
-function MenuIcon({ className }: { className?: string }) {
-  return (
-    <svg 
-      className={className}
-      width="20" 
-      height="20" 
-      viewBox="0 0 24 24" 
-      fill="none" 
-      stroke="currentColor" 
-      strokeWidth="2" 
-      strokeLinecap="round" 
-      strokeLinejoin="round"
-    >
-      <line x1="4" y1="12" x2="20" y2="12" />
-      <line x1="4" y1="6" x2="20" y2="6" />
-      <line x1="4" y1="18" x2="20" y2="18" />
-    </svg>
-  );
-}
-
-// Close icon
-function CloseIcon({ className }: { className?: string }) {
-  return (
-    <svg 
-      className={className}
-      width="20" 
-      height="20" 
-      viewBox="0 0 24 24" 
-      fill="none" 
-      stroke="currentColor" 
-      strokeWidth="2" 
-      strokeLinecap="round" 
-      strokeLinejoin="round"
-    >
-      <line x1="18" y1="6" x2="6" y2="18" />
-      <line x1="6" y1="6" x2="18" y2="18" />
-    </svg>
-  );
-}
-
-// Chevron down icon
-function ChevronDownIcon({ className }: { className?: string }) {
-  return (
-    <svg 
-      className={className}
-      width="16" 
-      height="16" 
-      viewBox="0 0 24 24" 
-      fill="none" 
-      stroke="currentColor" 
-      strokeWidth="2" 
-      strokeLinecap="round" 
-      strokeLinejoin="round"
-    >
-      <polyline points="6 9 12 15 18 9" />
-    </svg>
-  );
-}
+import {
+  InformationCircleIcon,
+  Bars3Icon,
+  XMarkIcon,
+  ChevronDownIcon,
+  ChartBarIcon,
+  Cog6ToothIcon,
+  KeyIcon,
+  DevicePhoneMobileIcon,
+  ArrowPathIcon,
+  StarIcon,
+} from '@heroicons/react/24/outline';
 
 // Install prompt modal for PWA
 function InstallPrompt({ onClose }: { onClose: () => void }) {
@@ -124,7 +55,7 @@ function InstallPrompt({ onClose }: { onClose: () => void }) {
             <div className="text-sm text-[#1e3a5f] space-y-2">
               <p className="font-medium">On Safari:</p>
               <ol className="list-decimal ml-5 space-y-1">
-                <li>Tap the <strong>Share</strong> button (□↑)</li>
+                <li>Tap the <strong>Share</strong> button</li>
                 <li>Scroll down and tap <strong>Add to Home Screen</strong></li>
                 <li>Tap <strong>Add</strong></li>
               </ol>
@@ -133,7 +64,7 @@ function InstallPrompt({ onClose }: { onClose: () => void }) {
             <div className="text-sm text-[#1e3a5f] space-y-2">
               <p className="font-medium">On Chrome:</p>
               <ol className="list-decimal ml-5 space-y-1">
-                <li>Tap the <strong>menu</strong> (⋮) button</li>
+                <li>Tap the <strong>menu</strong> button</li>
                 <li>Tap <strong>Add to Home screen</strong></li>
                 <li>Tap <strong>Add</strong></li>
               </ol>
@@ -195,9 +126,9 @@ function ProDropdown({
           rounded-lg transition-all text-sm hover:bg-[#162d4d]
           flex items-center gap-1"
       >
-        <span className="text-[#c4a882]">★</span>
+        <StarIcon className="w-4 h-4 text-[#c4a882]" />
         Pro
-        <ChevronDownIcon className={`transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        <ChevronDownIcon className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
       {isOpen && (
@@ -207,7 +138,7 @@ function ProDropdown({
             className="w-full px-4 py-3 text-left text-sm text-[#1e3a5f] hover:bg-[#e8dfd2] 
               flex items-center gap-3 border-b border-[#e8dfd2]"
           >
-            <span>📊</span>
+            <ChartBarIcon className="w-5 h-5" />
             Game History
           </button>
           <button
@@ -215,7 +146,7 @@ function ProDropdown({
             className="w-full px-4 py-3 text-left text-sm text-[#1e3a5f] hover:bg-[#e8dfd2] 
               flex items-center gap-3 border-b border-[#e8dfd2]"
           >
-            <span>⚙️</span>
+            <Cog6ToothIcon className="w-5 h-5" />
             Settings
           </button>
           <button
@@ -223,7 +154,7 @@ function ProDropdown({
             className="w-full px-4 py-3 text-left text-sm text-[#1e3a5f]/60 hover:bg-[#e8dfd2] 
               flex items-center gap-3"
           >
-            <span>🔑</span>
+            <KeyIcon className="w-5 h-5" />
             Manage License
           </button>
         </div>
@@ -284,7 +215,7 @@ export function Header() {
                 hover:bg-[#e8dfd2] rounded-lg transition-all"
               title="About this app"
             >
-              <InfoIcon />
+              <InformationCircleIcon className="w-5 h-5" />
             </button>
 
             {isPro ? (
@@ -321,7 +252,7 @@ export function Header() {
             onClick={() => setShowMobileMenu(!showMobileMenu)}
             className="sm:hidden p-2 text-[#1e3a5f] hover:bg-[#e8dfd2] rounded-lg transition-all"
           >
-            {showMobileMenu ? <CloseIcon /> : <MenuIcon />}
+            {showMobileMenu ? <XMarkIcon className="w-5 h-5" /> : <Bars3Icon className="w-5 h-5" />}
           </button>
         </div>
 
@@ -336,7 +267,7 @@ export function Header() {
               className="w-full px-4 py-3 text-left text-sm text-[#1e3a5f] hover:bg-[#e8dfd2] 
                 flex items-center gap-3 border-b border-[#e8dfd2]"
             >
-              <InfoIcon className="opacity-60" />
+              <InformationCircleIcon className="w-5 h-5 opacity-60" />
               About
             </button>
 
@@ -350,7 +281,7 @@ export function Header() {
                   className="w-full px-4 py-3 text-left text-sm text-[#1e3a5f] hover:bg-[#e8dfd2] 
                     flex items-center gap-3 border-b border-[#e8dfd2]"
                 >
-                  <span>📊</span>
+                  <ChartBarIcon className="w-5 h-5" />
                   Game History
                 </button>
                 <button
@@ -361,7 +292,7 @@ export function Header() {
                   className="w-full px-4 py-3 text-left text-sm text-[#1e3a5f] hover:bg-[#e8dfd2] 
                     flex items-center gap-3 border-b border-[#e8dfd2]"
                 >
-                  <span>⚙️</span>
+                  <Cog6ToothIcon className="w-5 h-5" />
                   Pro Settings
                 </button>
                 <button
@@ -372,7 +303,7 @@ export function Header() {
                   className="w-full px-4 py-3 text-left text-sm text-[#1e3a5f]/60 hover:bg-[#e8dfd2] 
                     flex items-center gap-3 border-b border-[#e8dfd2]"
                 >
-                  <span>🔑</span>
+                  <KeyIcon className="w-5 h-5" />
                   Manage License
                 </button>
               </>
@@ -385,7 +316,7 @@ export function Header() {
                 className="w-full px-4 py-3 text-left text-sm text-[#1e3a5f] hover:bg-[#e8dfd2] 
                   flex items-center gap-3 border-b border-[#e8dfd2]"
               >
-                <span className="text-[#c4a882]">★</span>
+                <StarIcon className="w-5 h-5 text-[#c4a882]" />
                 Keeper Pro
               </button>
             )}
@@ -399,7 +330,7 @@ export function Header() {
                 className="w-full px-4 py-3 text-left text-sm text-[#1e3a5f] hover:bg-[#e8dfd2] 
                   flex items-center gap-3 border-b border-[#e8dfd2]"
               >
-                <span>📱</span>
+                <DevicePhoneMobileIcon className="w-5 h-5" />
                 Add as App
               </button>
             )}
@@ -413,7 +344,7 @@ export function Header() {
                 className="w-full px-4 py-3 text-left text-sm font-medium text-[#1e3a5f] 
                   hover:bg-[#e8dfd2] flex items-center gap-3"
               >
-                <span>🔄</span>
+                <ArrowPathIcon className="w-5 h-5" />
                 New Game
               </button>
             )}

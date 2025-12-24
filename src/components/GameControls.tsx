@@ -5,6 +5,13 @@ import { usePro } from '@/context/ProContext';
 import { calculateAllWordsScore } from '@/lib/scoring';
 import { ViewMode } from '@/lib/types';
 import { useMemo, useState, useEffect, useCallback } from 'react';
+import {
+  ClockIcon,
+  PauseIcon,
+  PlayIcon,
+  TrophyIcon,
+  FlagIcon,
+} from '@heroicons/react/24/outline';
 
 interface GameControlsProps {
   viewMode: ViewMode;
@@ -210,6 +217,14 @@ export function GameControls({ viewMode, onViewModeChange }: GameControlsProps) 
     dispatch({ type: 'FULL_NEW_GAME' });
   };
 
+  // Medal icons for rankings
+  const getMedalIcon = (index: number) => {
+    if (index === 0) return <TrophyIcon className="w-4 h-4 text-yellow-500" />;
+    if (index === 1) return <span className="text-sm text-gray-400">2nd</span>;
+    if (index === 2) return <span className="text-sm text-amber-600">3rd</span>;
+    return <span className="text-sm text-[#1e3a5f]/50">{index + 1}.</span>;
+  };
+
   // End Game Modal
   const EndGameModal = () => {
     if (!showEndGameModal) return null;
@@ -234,7 +249,7 @@ export function GameControls({ viewMode, onViewModeChange }: GameControlsProps) 
           <div className="p-5">
             {/* Winner */}
             <div className="text-center mb-4">
-              <div className="text-3xl mb-1">🏆</div>
+              <TrophyIcon className="w-10 h-10 text-yellow-500 mx-auto mb-1" />
               <p className="text-[#1e3a5f] font-bold text-lg">{winner?.name || 'No winner'}</p>
               <p className="text-[#1e3a5f]/60 text-sm">{winner?.score || 0} points</p>
             </div>
@@ -249,7 +264,7 @@ export function GameControls({ viewMode, onViewModeChange }: GameControlsProps) 
                   }`}
                 >
                   <div className="flex items-center gap-2">
-                    <span className="text-sm">{index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`}</span>
+                    {getMedalIcon(index)}
                     <span className="text-sm text-[#1e3a5f]">{player.name}</span>
                   </div>
                   <span className="font-bold text-[#1e3a5f]">{player.score}</span>
@@ -261,7 +276,7 @@ export function GameControls({ viewMode, onViewModeChange }: GameControlsProps) 
             {isPro && (
               <div className="bg-[#f5f0e8] rounded-lg p-3 mb-4">
                 <p className="text-xs text-[#1e3a5f]/70 text-center">
-                  ✨ Pro: This game will be saved to your history
+                  Pro: This game will be saved to your history
                 </p>
               </div>
             )}
@@ -339,7 +354,7 @@ export function GameControls({ viewMode, onViewModeChange }: GameControlsProps) 
           {isPro && settings.timerEnabled && timeRemaining !== null && (
             <div className="mt-2 pt-2 border-t border-[#d4c4a8]">
               <div className="flex items-center justify-center gap-2">
-                <span className="text-xs text-[#1e3a5f]/60">⏱️ Time:</span>
+                <ClockIcon className="w-4 h-4 text-[#1e3a5f]/60" />
                 <span className={`text-2xl font-bold font-mono ${getTimerColor()}`}>
                   {formatTime(timeRemaining)}
                 </span>
@@ -355,9 +370,9 @@ export function GameControls({ viewMode, onViewModeChange }: GameControlsProps) 
                     title={isTimerRunning ? 'Pause timer' : 'Resume timer'}
                   >
                     {isTimerRunning ? (
-                      <span className="text-xs font-bold">⏸</span>
+                      <PauseIcon className="w-4 h-4" />
                     ) : (
-                      <span className="text-xs font-bold">▶</span>
+                      <PlayIcon className="w-4 h-4" />
                     )}
                   </button>
                 )}
@@ -371,7 +386,10 @@ export function GameControls({ viewMode, onViewModeChange }: GameControlsProps) 
               {/* Timer Expired Warning */}
               {timerExpired && (
                 <div className="mt-2 bg-red-100 border border-red-300 rounded-md p-2 text-center">
-                  <p className="text-red-600 text-sm font-medium">⏰ Time&apos;s up!</p>
+                  <p className="text-red-600 text-sm font-medium flex items-center justify-center gap-1">
+                    <ClockIcon className="w-4 h-4" />
+                    Time&apos;s up!
+                  </p>
                   <button
                     onClick={handleTimerExpired}
                     className="mt-1 text-xs bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
@@ -490,9 +508,11 @@ export function GameControls({ viewMode, onViewModeChange }: GameControlsProps) 
         <button
           onClick={() => setShowEndGameModal(true)}
           className="w-full py-2 px-3 bg-[#c4a882] hover:bg-[#b39872] 
-            text-[#1e3a5f] font-medium rounded-md transition-colors text-sm"
+            text-[#1e3a5f] font-medium rounded-md transition-colors text-sm
+            flex items-center justify-center gap-2"
         >
-          🏁 End Game
+          <FlagIcon className="w-4 h-4" />
+          End Game
         </button>
       )}
     </div>

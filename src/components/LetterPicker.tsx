@@ -5,6 +5,14 @@ import { ALPHABET, LETTER_VALUES, BOARD_SIZE } from '@/lib/constants';
 import { Direction } from '@/lib/types';
 import { usePro } from '@/context/ProContext';
 import { LANGUAGE_CONFIGS } from './ProSettings';
+import {
+  XMarkIcon,
+  ArrowRightIcon,
+  ArrowDownIcon,
+  BackspaceIcon,
+  CheckIcon,
+  PlusIcon,
+} from '@heroicons/react/24/outline';
 
 interface LetterPickerProps {
   startRow: number;
@@ -192,9 +200,9 @@ export function LetterPicker({
           <h3 className="text-lg font-bold text-gray-800">Place a Word</h3>
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 text-2xl leading-none"
+            className="p-1 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
           >
-            ×
+            <XMarkIcon className="w-6 h-6" />
           </button>
         </div>
 
@@ -210,9 +218,9 @@ export function LetterPicker({
                   : 'text-gray-600 hover:text-gray-800'
                 }`}
             >
-              <span>→</span>
+              <ArrowRightIcon className="w-4 h-4" />
               <span>Horizontal</span>
-              <span className="text-xs text-gray-400">({horizontalSpaces} spaces)</span>
+              <span className="text-xs text-gray-400">({horizontalSpaces})</span>
             </button>
             <button
               onClick={() => setDirection('vertical')}
@@ -222,9 +230,9 @@ export function LetterPicker({
                   : 'text-gray-600 hover:text-gray-800'
                 }`}
             >
-              <span>↓</span>
+              <ArrowDownIcon className="w-4 h-4" />
               <span>Vertical</span>
-              <span className="text-xs text-gray-400">({verticalSpaces} spaces)</span>
+              <span className="text-xs text-gray-400">({verticalSpaces})</span>
             </button>
           </div>
         </div>
@@ -303,7 +311,7 @@ export function LetterPicker({
                     : 'bg-amber-100 text-amber-700 hover:bg-amber-200'
                 }`}
               >
-                <span>{showCustomLetters ? '✓' : '+'}</span>
+                {showCustomLetters ? <CheckIcon className="w-3 h-3" /> : <PlusIcon className="w-3 h-3" />}
                 <span>{getActiveLanguages().join(', ')}</span>
               </button>
             )}
@@ -352,11 +360,11 @@ export function LetterPicker({
               disabled={word.length === 0}
               className="aspect-square flex items-center justify-center 
                 bg-red-100 hover:bg-red-200 disabled:bg-gray-100 disabled:text-gray-400
-                text-red-700 font-bold text-lg
+                text-red-700
                 rounded-md transition-all duration-150 shadow-sm
                 border border-red-300 disabled:border-gray-200"
             >
-              ←
+              <BackspaceIcon className="w-5 h-5" />
             </button>
           </div>
 
@@ -417,9 +425,9 @@ export function LetterPicker({
                 <h4 className="font-bold text-gray-800">Choose letter for blank tile</h4>
                 <button
                   onClick={() => setShowBlankPicker(false)}
-                  className="text-gray-500 hover:text-gray-700 text-xl leading-none"
+                  className="p-1 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
                 >
-                  ×
+                  <XMarkIcon className="w-5 h-5" />
                 </button>
               </div>
               <p className="text-xs text-gray-500 mb-3">

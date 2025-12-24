@@ -4,6 +4,10 @@ import { useState } from 'react';
 import { useGame } from '@/context/GameContext';
 import { usePro } from '@/context/ProContext';
 import { MAX_PLAYERS } from '@/lib/constants';
+import {
+  XMarkIcon,
+  PlusIcon,
+} from '@heroicons/react/24/outline';
 
 export function PlayerSetup() {
   const { state, dispatch } = useGame();
@@ -67,7 +71,7 @@ export function PlayerSetup() {
                     text-[#1e3a5f] text-sm font-medium rounded-lg transition-colors
                     flex items-center gap-1"
                 >
-                  <span>+</span>
+                  <PlusIcon className="w-3 h-3" />
                   <span>{name}</span>
                 </button>
               ))}
@@ -120,9 +124,9 @@ export function PlayerSetup() {
                 </div>
                 <button
                   onClick={() => handleRemovePlayer(player.id)}
-                  className="text-[#1e3a5f] hover:text-[#0f1f36] text-lg leading-none px-2"
+                  className="p-1 text-[#1e3a5f] hover:text-red-500 hover:bg-red-50 rounded transition-colors"
                 >
-                  ×
+                  <XMarkIcon className="w-5 h-5" />
                 </button>
               </div>
             ))}

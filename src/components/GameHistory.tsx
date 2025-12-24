@@ -2,6 +2,10 @@
 
 import { useEffect } from 'react';
 import { usePro, GameHistoryEntry } from '@/context/ProContext';
+import {
+  TrophyIcon,
+  ChartBarIcon,
+} from '@heroicons/react/24/outline';
 
 interface GameHistoryProps {
   isOpen: boolean;
@@ -66,7 +70,7 @@ function GameCard({ game }: { game: GameHistoryEntry }) {
               }`}
             >
               <div className="flex items-center gap-2">
-                {index === 0 && <span className="text-sm">🏆</span>}
+                {index === 0 && <TrophyIcon className="w-4 h-4 text-yellow-500" />}
                 <span className={`text-sm ${index === 0 ? 'font-bold' : ''} text-[#1e3a5f]`}>
                   {player.name}
                 </span>
@@ -142,11 +146,6 @@ export function GameHistory({ isOpen, onClose }: GameHistoryProps) {
 
   // Calculate stats
   const totalGames = gameHistory.length;
-  const totalWins = gameHistory.reduce((acc, game) => {
-    const sorted = [...game.players].sort((a, b) => b.score - a.score);
-    // Count wins where user might be any player (we don't track which player is the user)
-    return acc;
-  }, 0);
   const avgScore = totalGames > 0
     ? Math.round(
         gameHistory.reduce((acc, game) => {
@@ -193,7 +192,7 @@ export function GameHistory({ isOpen, onClose }: GameHistoryProps) {
             </div>
           ) : gameHistory.length === 0 ? (
             <div className="text-center py-8">
-              <p className="text-4xl mb-2">📊</p>
+              <ChartBarIcon className="w-12 h-12 text-[#1e3a5f]/30 mx-auto mb-2" />
               <p className="text-[#1e3a5f] font-medium">No games yet</p>
               <p className="text-sm text-[#1e3a5f]/50">
                 Complete a game to see it here
@@ -220,4 +219,3 @@ export function GameHistory({ isOpen, onClose }: GameHistoryProps) {
     </div>
   );
 }
-

@@ -2,6 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { usePro } from '@/context/ProContext';
+import {
+  XMarkIcon,
+  PlusIcon,
+  MinusIcon,
+} from '@heroicons/react/24/outline';
 
 // Language configurations with custom letter sets
 export const LANGUAGE_CONFIGS: Record<string, {
@@ -210,9 +215,9 @@ export function ProSettings({ isOpen, onClose }: ProSettingsProps) {
                       timerMinutes: Math.max(1, (localSettings.timerMinutes || 2) - 1) 
                     })}
                     className="w-8 h-8 rounded-lg bg-[#e8dfd2] hover:bg-[#d4c4a8] 
-                      text-[#1e3a5f] font-bold transition-colors"
+                      text-[#1e3a5f] font-bold transition-colors flex items-center justify-center"
                   >
-                    -
+                    <MinusIcon className="w-4 h-4" />
                   </button>
                   <span className="w-8 text-center font-bold text-[#1e3a5f]">
                     {localSettings.timerMinutes || 2}
@@ -223,9 +228,9 @@ export function ProSettings({ isOpen, onClose }: ProSettingsProps) {
                       timerMinutes: Math.min(10, (localSettings.timerMinutes || 2) + 1) 
                     })}
                     className="w-8 h-8 rounded-lg bg-[#e8dfd2] hover:bg-[#d4c4a8] 
-                      text-[#1e3a5f] font-bold transition-colors"
+                      text-[#1e3a5f] font-bold transition-colors flex items-center justify-center"
                   >
-                    +
+                    <PlusIcon className="w-4 h-4" />
                   </button>
                 </div>
               </div>
@@ -369,7 +374,7 @@ export function ProSettings({ isOpen, onClose }: ProSettingsProps) {
                       onClick={() => handleRemovePlayer(name)}
                       className="text-[#1e3a5f]/40 hover:text-red-500 transition-colors"
                     >
-                      ✕
+                      <XMarkIcon className="w-4 h-4" />
                     </button>
                   </div>
                 ))}
@@ -403,4 +408,3 @@ export function ProSettings({ isOpen, onClose }: ProSettingsProps) {
     </div>
   );
 }
-

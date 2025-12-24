@@ -2,6 +2,11 @@
 
 import { useState } from 'react';
 import { usePro } from '@/context/ProContext';
+import {
+  CheckIcon,
+  ArrowLeftIcon,
+  SparklesIcon,
+} from '@heroicons/react/24/outline';
 
 interface ProModalProps {
   isOpen: boolean;
@@ -116,13 +121,13 @@ export function ProModal({ isOpen, onClose }: ProModalProps) {
         >
           <div className="bg-[#1e3a5f] px-5 py-4">
             <div className="flex items-center gap-2">
-              <span className="text-xl">✨</span>
+              <SparklesIcon className="w-5 h-5 text-[#c4a882]" />
               <h2 className="text-lg font-bold text-[#f5f0e8]">Keeper Pro Active</h2>
             </div>
           </div>
 
           <div className="p-5 text-center">
-            <div className="text-4xl mb-3">🎉</div>
+            <SparklesIcon className="w-12 h-12 text-[#c4a882] mx-auto mb-3" />
             <p className="text-[#1e3a5f] font-medium mb-1">You have Pro access!</p>
             <p className="text-sm text-[#1e3a5f]/60 mb-4">
               Licensed to: {licenseEmail}
@@ -211,9 +216,10 @@ export function ProModal({ isOpen, onClose }: ProModalProps) {
             <button
               onClick={() => { setView('main'); setError(''); }}
               className="w-full py-2 px-4 text-[#1e3a5f]/50 hover:text-[#1e3a5f] 
-                text-sm transition-colors"
+                text-sm transition-colors flex items-center justify-center gap-1"
             >
-              ← Back
+              <ArrowLeftIcon className="w-4 h-4" />
+              Back
             </button>
           </div>
         </div>
@@ -273,9 +279,10 @@ export function ProModal({ isOpen, onClose }: ProModalProps) {
             <button
               onClick={() => { setView('main'); setError(''); }}
               className="w-full py-2 px-4 text-[#1e3a5f]/50 hover:text-[#1e3a5f] 
-                text-sm transition-colors"
+                text-sm transition-colors flex items-center justify-center gap-1"
             >
-              ← Back
+              <ArrowLeftIcon className="w-4 h-4" />
+              Back
             </button>
           </div>
         </div>
@@ -312,7 +319,7 @@ export function ProModal({ isOpen, onClose }: ProModalProps) {
           <ul className="space-y-2">
             {features.map((feature, index) => (
               <li key={index} className="flex items-start gap-2 text-sm text-[#1e3a5f]">
-                <span className="text-[#3d5a80] mt-0.5">✓</span>
+                <CheckIcon className="w-4 h-4 text-[#3d5a80] mt-0.5 flex-shrink-0" />
                 <span>{feature}</span>
               </li>
             ))}
