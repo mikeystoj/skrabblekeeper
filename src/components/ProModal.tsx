@@ -267,7 +267,7 @@ export function ProModal({ isOpen, onClose }: ProModalProps) {
                 focus:border-[#1e3a5f] focus:outline-none bg-white
                 text-[#1e3a5f] placeholder-[#1e3a5f]/40 font-mono text-center
                 tracking-wider mb-3"
-              maxLength={16}
+              maxLength={18}
             />
 
             {error && (
