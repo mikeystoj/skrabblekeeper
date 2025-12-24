@@ -10,6 +10,7 @@ const dmSans = DM_Sans({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://skrabblekeeper.com'),
   title: "Skrabble Keeper - Simple Scrabble Score Tracker with Board View",
   description: "Free online Scrabble scorer and score keeper with interactive board view. Track scores, words, and game history for up to 4 players. Simple, fast, and works offline.",
   keywords: [
