@@ -3,6 +3,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { ALPHABET, LETTER_VALUES, BOARD_SIZE } from '@/lib/constants';
 import { Direction } from '@/lib/types';
+import { usePro } from '@/context/ProContext';
+import { LANGUAGE_CONFIGS } from './ProSettings';
 
 interface LetterPickerProps {
   startRow: number;
@@ -22,11 +24,21 @@ export function LetterPicker({
   onPlaceWord, 
   onClose 
 }: LetterPickerProps) {
+  const { isPro, settings } = usePro();
   const [word, setWord] = useState('');
   const [direction, setDirection] = useState<Direction>('horizontal');
   const [showBlankPicker, setShowBlankPicker] = useState(false);
+  const [showCustomLetters, setShowCustomLetters] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Get custom letters from selected languages
+  const customLetters = isPro ? settings.customLetters || {} : {};
+  const hasCustomLetters = Object.keys(customLetters).length > 0;
+
+  // Get all available letters (standard + custom)
+  const allLetters = [...ALPHABET];
+  const customLettersList = Object.keys(customLetters);
 
   // Calculate available spaces in each direction
   const getAvailableSpaces = useCallback((dir: Direction): number => {
@@ -60,6 +72,8 @@ export function LetterPicker({
       if (e.key === 'Escape') {
         if (showBlankPicker) {
           setShowBlankPicker(false);
+        } else if (showCustomLetters) {
+          setShowCustomLetters(false);
         } else {
           onClose();
         }
@@ -68,7 +82,7 @@ export function LetterPicker({
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [onClose, showBlankPicker]);
+  }, [onClose, showBlankPicker, showCustomLetters]);
 
   // Close on click outside
   useEffect(() => {
@@ -83,10 +97,17 @@ export function LetterPicker({
   }, [onClose]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Only allow uppercase letters (lowercase reserved for blank tiles added via picker)
-    const value = e.target.value.toUpperCase().replace(/[^A-Z]/g, '');
+    // Allow uppercase letters and custom letters
+    const validChars = new Set([...ALPHABET, ...customLettersList]);
+    const value = e.target.value.toUpperCase();
+    let filtered = '';
+    for (const char of value) {
+      if (validChars.has(char)) {
+        filtered += char;
+      }
+    }
     const maxLength = direction === 'horizontal' ? horizontalSpaces : verticalSpaces;
-    setWord(value.slice(0, maxLength));
+    setWord(filtered.slice(0, maxLength));
   };
 
   const handleLetterClick = (letter: string) => {
@@ -128,6 +149,15 @@ export function LetterPicker({
     }
   };
 
+  // Get letter value (check custom letters first, then standard)
+  const getLetterValue = (letter: string): number => {
+    const upperLetter = letter.toUpperCase();
+    if (customLetters[upperLetter]) {
+      return customLetters[upperLetter].value;
+    }
+    return LETTER_VALUES[upperLetter] || 0;
+  };
+
   // Calculate score preview (blank tiles = lowercase = 0 points)
   const calculatePreviewScore = (): number => {
     let score = 0;
@@ -136,10 +166,18 @@ export function LetterPicker({
       if (isBlankTile(letter)) {
         score += 0;
       } else {
-        score += LETTER_VALUES[letter] || 0;
+        score += getLetterValue(letter);
       }
     }
     return score;
+  };
+
+  // Get active language names for display
+  const getActiveLanguages = (): string[] => {
+    if (!isPro) return [];
+    return settings.languages
+      .filter(lang => LANGUAGE_CONFIGS[lang]?.customLetters)
+      .map(lang => LANGUAGE_CONFIGS[lang].name);
   };
 
   const maxLength = direction === 'horizontal' ? horizontalSpaces : verticalSpaces;
@@ -217,6 +255,7 @@ export function LetterPicker({
               <div className="flex gap-1 flex-wrap">
                 {word.split('').map((letter, i) => {
                   const isBlank = isBlankTile(letter);
+                  const isCustom = customLettersList.includes(letter.toUpperCase());
                   return (
                     <div 
                       key={i}
@@ -224,12 +263,14 @@ export function LetterPicker({
                         font-bold text-sm shadow-sm relative
                         ${isBlank 
                           ? 'bg-stone-200 text-stone-700 border-2 border-dashed border-stone-400' 
-                          : 'bg-emerald-400 text-emerald-900'
+                          : isCustom
+                            ? 'bg-amber-400 text-amber-900'
+                            : 'bg-emerald-400 text-emerald-900'
                         }`}
                     >
                       {letter.toUpperCase()}
                       <span className="absolute bottom-0 right-0.5 text-[8px] opacity-60">
-                        {isBlank ? '0' : LETTER_VALUES[letter]}
+                        {isBlank ? '0' : getLetterValue(letter)}
                       </span>
                     </div>
                   );
@@ -248,11 +289,28 @@ export function LetterPicker({
 
         {/* Letter Grid */}
         <div className="mb-4">
-          <label className="text-sm font-medium text-gray-600 block mb-2">
-            Or click letters below
-          </label>
+          <div className="flex items-center justify-between mb-2">
+            <label className="text-sm font-medium text-gray-600">
+              Or click letters below
+            </label>
+            {/* Custom Letters Toggle (Pro only) */}
+            {isPro && hasCustomLetters && (
+              <button
+                onClick={() => setShowCustomLetters(!showCustomLetters)}
+                className={`text-xs px-2 py-1 rounded-lg transition-colors flex items-center gap-1 ${
+                  showCustomLetters 
+                    ? 'bg-amber-500 text-white' 
+                    : 'bg-amber-100 text-amber-700 hover:bg-amber-200'
+                }`}
+              >
+                <span>{showCustomLetters ? '✓' : '+'}</span>
+                <span>{getActiveLanguages().join(', ')}</span>
+              </button>
+            )}
+          </div>
+          
           <div className="grid grid-cols-9 gap-1.5">
-            {ALPHABET.map((letter) => (
+            {allLetters.map((letter) => (
               <button
                 key={letter}
                 onClick={() => handleLetterClick(letter)}
@@ -301,6 +359,34 @@ export function LetterPicker({
               ←
             </button>
           </div>
+
+          {/* Custom Letters Grid (Pro only) */}
+          {isPro && hasCustomLetters && showCustomLetters && (
+            <div className="mt-3 p-3 bg-amber-50 rounded-lg border border-amber-200">
+              <p className="text-xs text-amber-700 mb-2 font-medium">
+                Special Characters ({getActiveLanguages().join(', ')})
+              </p>
+              <div className="grid grid-cols-9 gap-1.5">
+                {customLettersList.map((letter) => (
+                  <button
+                    key={letter}
+                    onClick={() => handleLetterClick(letter)}
+                    disabled={word.length >= maxLength}
+                    className="relative aspect-square flex items-center justify-center 
+                      bg-amber-300 hover:bg-amber-400 disabled:bg-gray-100 disabled:text-gray-400
+                      text-amber-900 font-bold text-sm
+                      rounded-md transition-all duration-150 hover:scale-105 shadow-sm
+                      border border-amber-500 disabled:border-gray-200"
+                  >
+                    {letter}
+                    <span className="absolute bottom-0 right-0.5 text-[7px] opacity-60">
+                      {customLetters[letter].value}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Action Buttons */}
@@ -348,6 +434,19 @@ export function LetterPicker({
                       bg-stone-100 hover:bg-stone-300 
                       text-stone-700 font-bold text-sm
                       rounded transition-all border border-stone-300"
+                  >
+                    {letter}
+                  </button>
+                ))}
+                {/* Also show custom letters in blank picker */}
+                {isPro && customLettersList.map((letter) => (
+                  <button
+                    key={letter}
+                    onClick={() => handleBlankLetterSelect(letter)}
+                    className="aspect-square flex items-center justify-center 
+                      bg-amber-100 hover:bg-amber-300 
+                      text-amber-700 font-bold text-sm
+                      rounded transition-all border border-amber-300"
                   >
                     {letter}
                   </button>

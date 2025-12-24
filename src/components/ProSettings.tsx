@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { usePro } from '@/context/ProContext';
 
 // Language configurations with custom letter sets
-const LANGUAGE_CONFIGS: Record<string, {
+export const LANGUAGE_CONFIGS: Record<string, {
   name: string;
   flag: string;
   customLetters?: Record<string, { value: number; count: number }>;

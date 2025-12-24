@@ -343,7 +343,30 @@ export function GameControls({ viewMode, onViewModeChange }: GameControlsProps) 
                 <span className={`text-2xl font-bold font-mono ${getTimerColor()}`}>
                   {formatTime(timeRemaining)}
                 </span>
+                {/* Pause/Resume Button */}
+                {!timerExpired && (
+                  <button
+                    onClick={() => setIsTimerRunning(!isTimerRunning)}
+                    className={`ml-2 w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
+                      isTimerRunning 
+                        ? 'bg-[#1e3a5f] hover:bg-[#162d4d] text-[#f5f0e8]' 
+                        : 'bg-amber-500 hover:bg-amber-600 text-white'
+                    }`}
+                    title={isTimerRunning ? 'Pause timer' : 'Resume timer'}
+                  >
+                    {isTimerRunning ? (
+                      <span className="text-xs font-bold">⏸</span>
+                    ) : (
+                      <span className="text-xs font-bold">▶</span>
+                    )}
+                  </button>
+                )}
               </div>
+              
+              {/* Paused indicator */}
+              {!isTimerRunning && !timerExpired && (
+                <p className="text-xs text-amber-600 text-center mt-1 animate-pulse">Timer paused</p>
+              )}
               
               {/* Timer Expired Warning */}
               {timerExpired && (
