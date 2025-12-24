@@ -23,19 +23,28 @@ export const metadata: Metadata = {
     "free scrabble scorer",
     "online scrabble keeper"
   ],
-  authors: [{ name: "Mayke" }],
-  creator: "Mayke",
+  authors: [{ name: "Skrabble Keeper" }],
+  creator: "Skrabble Keeper",
   openGraph: {
     title: "Skrabble Keeper - Simple Scrabble Score Tracker",
     description: "Free online Scrabble scorer with interactive board view. Track scores for up to 4 players.",
     type: "website",
     locale: "en_US",
     siteName: "Skrabble Keeper",
+    images: [
+      {
+        url: "/og-image.svg",
+        width: 1200,
+        height: 630,
+        alt: "Skrabble Keeper - Simple Scrabble Score Tracker with Board View",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "Skrabble Keeper - Simple Scrabble Score Tracker",
     description: "Free online Scrabble scorer with interactive board view. Track scores for up to 4 players.",
+    images: ["/og-image.svg"],
   },
   icons: {
     icon: "/Skrabble_Favicon.png",
