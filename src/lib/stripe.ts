@@ -16,6 +16,6 @@ export function getStripe(): Stripe {
   return stripeInstance;
 }
 
-export const PRICE_AMOUNT = 1000; // $10.00 in cents
-export const CURRENCY = 'usd';
+export const PRICE_AMOUNT = 100; // $1.00 in cents (testing)
+export const CURRENCY = 'aud';
 

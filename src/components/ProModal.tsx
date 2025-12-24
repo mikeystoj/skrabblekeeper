@@ -186,7 +186,7 @@ export function ProModal({ isOpen, onClose }: ProModalProps) {
         >
           <div className="bg-[#1e3a5f] px-5 py-4">
             <h2 className="text-lg font-bold text-[#f5f0e8]">Get Keeper Pro</h2>
-            <p className="text-[#f5f0e8]/70 text-sm">$10 one-time payment</p>
+            <p className="text-[#f5f0e8]/70 text-sm">$1 one-time payment (testing)</p>
           </div>
 
           <div className="p-5">
@@ -318,7 +318,7 @@ export function ProModal({ isOpen, onClose }: ProModalProps) {
         {/* Price */}
         <div className="px-5 py-4 border-b border-[#e8dfd2]">
           <div className="flex items-baseline gap-1">
-            <span className="text-3xl font-bold text-[#1e3a5f]">$10</span>
+            <span className="text-3xl font-bold text-[#1e3a5f]">$1</span>
             <span className="text-[#1e3a5f]/50 text-sm">one-time</span>
           </div>
         </div>
@@ -342,7 +342,7 @@ export function ProModal({ isOpen, onClose }: ProModalProps) {
             className="w-full py-2.5 px-4 bg-[#1e3a5f] hover:bg-[#162d4d]
               text-[#f5f0e8] font-bold rounded-lg transition-colors"
           >
-            Get Pro - $10
+            Get Pro - $1
           </button>
           <button
             onClick={() => setView('activate')}
