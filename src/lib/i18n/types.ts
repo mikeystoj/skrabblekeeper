@@ -162,6 +162,11 @@ export interface Translations {
     proActive: string;
     proActiveDesc: string;
     featuresIncluded: string;
+    lostKey: string;
+    resendKey: string;
+    resendKeyDesc: string;
+    resendKeyInfo: string;
+    sendKey: string;
   };
 
   // Pro Settings

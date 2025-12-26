@@ -14,7 +14,7 @@ interface ProModalProps {
   onClose: () => void;
 }
 
-type View = 'main' | 'activate' | 'purchase';
+type View = 'main' | 'activate' | 'purchase' | 'resend';
 
 export function ProModal({ isOpen, onClose }: ProModalProps) {
   const { isPro, licenseEmail, activatePro, deactivatePro } = usePro();
@@ -24,6 +24,7 @@ export function ProModal({ isOpen, onClose }: ProModalProps) {
   const [licenseKey, setLicenseKey] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
 
   if (!isOpen) return null;
 
@@ -101,11 +102,44 @@ export function ProModal({ isOpen, onClose }: ProModalProps) {
     deactivatePro();
   };
 
+  const handleResendKey = async () => {
+    if (!email || !email.includes('@')) {
+      setError('Please enter a valid email address');
+      return;
+    }
+
+    setIsLoading(true);
+    setError('');
+    setSuccessMessage('');
+
+    try {
+      const response = await fetch('/api/resend-license', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        setSuccessMessage('License key sent! Check your email.');
+        setEmail('');
+      } else {
+        setError(data.error || 'No license found for this email');
+      }
+    } catch {
+      setError('Failed to send. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const resetAndClose = () => {
     setView('main');
     setEmail('');
     setLicenseKey('');
     setError('');
+    setSuccessMessage('');
     onClose();
   };
 
@@ -310,6 +344,73 @@ export function ProModal({ isOpen, onClose }: ProModalProps) {
     );
   }
 
+  // Resend view
+  if (view === 'resend') {
+    return (
+      <div 
+        className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4"
+        onClick={resetAndClose}
+      >
+        <div 
+          className="bg-[#faf8f5] rounded-xl shadow-xl max-w-sm w-full overflow-hidden"
+          onClick={e => e.stopPropagation()}
+        >
+          <div className="bg-[#1e3a5f] px-5 py-4">
+            <h2 className="text-lg font-bold text-[#f5f0e8]">{t.proModal.resendKey}</h2>
+            <p className="text-[#f5f0e8]/70 text-sm">{t.proModal.resendKeyDesc}</p>
+          </div>
+
+          <div className="p-5">
+            <p className="text-sm text-[#1e3a5f]/70 mb-4">
+              {t.proModal.resendKeyInfo}
+            </p>
+
+            <input
+              type="email"
+              placeholder="your@email.com"
+              value={email}
+              onChange={(e) => { setEmail(e.target.value); setError(''); setSuccessMessage(''); }}
+              className="w-full px-4 py-3 rounded-lg border-2 border-[#e8dfd2] 
+                focus:border-[#1e3a5f] focus:outline-none bg-white
+                text-[#1e3a5f] placeholder-[#1e3a5f]/40 mb-3"
+            />
+
+            {error && (
+              <p className="text-red-500 text-sm mb-3">{error}</p>
+            )}
+
+            {successMessage && (
+              <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-3">
+                <p className="text-green-700 text-sm text-center">{successMessage}</p>
+              </div>
+            )}
+
+            <button
+              onClick={handleResendKey}
+              disabled={isLoading || !email}
+              className="w-full py-3 px-4 bg-[#1e3a5f] hover:bg-[#162d4d] 
+                text-[#f5f0e8] font-bold rounded-lg transition-colors
+                disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isLoading ? t.common.loading : t.proModal.sendKey}
+            </button>
+          </div>
+
+          <div className="px-5 pb-5">
+            <button
+              onClick={() => { setView('main'); setError(''); setSuccessMessage(''); }}
+              className="w-full py-2 px-4 text-[#1e3a5f]/50 hover:text-[#1e3a5f] 
+                text-sm transition-colors flex items-center justify-center gap-1"
+            >
+              <ArrowLeftIcon className="w-4 h-4" />
+              {t.common.back}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // Main view
   return (
     <div 
@@ -368,6 +469,13 @@ export function ProModal({ isOpen, onClose }: ProModalProps) {
               text-[#1e3a5f] font-medium rounded-lg transition-colors text-sm"
           >
             {t.proModal.activateLicense}
+          </button>
+          <button
+            onClick={() => setView('resend')}
+            className="w-full py-2 px-4 text-[#1e3a5f]/60 hover:text-[#1e3a5f] 
+              text-sm transition-colors"
+          >
+            {t.proModal.lostKey}
           </button>
           <button
             onClick={resetAndClose}

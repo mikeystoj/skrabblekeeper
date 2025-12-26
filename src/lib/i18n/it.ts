@@ -136,6 +136,11 @@ export const it: Translations = {
     proActive: 'Keeper Pro Attivo',
     proActiveDesc: 'Grazie per supportare Skrabble Keeper!',
     featuresIncluded: 'Funzionalità Pro incluse:',
+    lostKey: 'Hai perso la chiave di licenza?',
+    resendKey: 'Reinvia chiave di licenza',
+    resendKeyDesc: 'Ricevi la chiave via email',
+    resendKeyInfo: 'Inserisci l\'email usata per acquistare Pro e ti invieremo nuovamente la chiave di licenza.',
+    sendKey: 'Invia chiave',
   },
 
   proSettings: {
