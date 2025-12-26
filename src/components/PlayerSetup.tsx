@@ -9,7 +9,9 @@ import {
   XMarkIcon,
   PlusIcon,
   Bars2Icon,
+  SparklesIcon,
 } from '@heroicons/react/24/outline';
+import { ProModal } from './ProModal';
 
 export function PlayerSetup() {
   const { state, dispatch } = useGame();
@@ -18,6 +20,7 @@ export function PlayerSetup() {
   const [newPlayerName, setNewPlayerName] = useState('');
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  const [showProModal, setShowProModal] = useState(false);
   const dragNodeRef = useRef<HTMLDivElement | null>(null);
 
   const savedPlayers = settings.savedPlayers || [];
@@ -260,7 +263,29 @@ export function PlayerSetup() {
             : t.playerSetup.startGame
           }
         </button>
+
+        {/* Pro Promo Banner (only when not Pro) */}
+        {!isPro && (
+          <button
+            onClick={() => setShowProModal(true)}
+            className="w-full mt-3 py-3 px-4 bg-gradient-to-r from-[#1e3a5f] to-[#3d5a80] 
+              hover:from-[#162d4d] hover:to-[#2d4a70]
+              text-[#f5f0e8] rounded-lg transition-all text-left
+              flex items-center gap-3 group"
+          >
+            <div className="w-8 h-8 rounded-full bg-[#c4a882]/20 flex items-center justify-center flex-shrink-0">
+              <SparklesIcon className="w-4 h-4 text-[#c4a882]" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-sm">{t.gameControls.proPromo}</p>
+              <p className="text-xs text-[#f5f0e8]/70">{t.gameControls.proPromoSubtitle}</p>
+            </div>
+          </button>
+        )}
       </div>
+
+      {/* Pro Modal */}
+      <ProModal isOpen={showProModal} onClose={() => setShowProModal(false)} />
     </div>
   );
 }

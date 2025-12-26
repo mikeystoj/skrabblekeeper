@@ -62,6 +62,8 @@ export const fr: Translations = {
     rank: 'Rang',
     player: 'Joueur',
     score: 'Score',
+    proPromo: 'Keeper Pro pour 10$',
+    proPromoSubtitle: 'Un paiement. À vie. Simple.',
   },
 
   board: {
