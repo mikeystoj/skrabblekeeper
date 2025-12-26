@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { usePro } from '@/context/ProContext';
+import { useLanguage } from '@/context/LanguageContext';
 import {
   XMarkIcon,
   PlusIcon,
@@ -66,6 +67,7 @@ interface ProSettingsProps {
 
 export function ProSettings({ isOpen, onClose }: ProSettingsProps) {
   const { settings, updateSettings, isPro } = usePro();
+  const { t } = useLanguage();
   const [isSaving, setIsSaving] = useState(false);
   const [localSettings, setLocalSettings] = useState(settings);
   const [newPlayerName, setNewPlayerName] = useState('');
@@ -159,7 +161,7 @@ export function ProSettings({ isOpen, onClose }: ProSettingsProps) {
             onClick={onClose}
             className="mt-4 py-2 px-4 bg-[#1e3a5f] text-[#f5f0e8] rounded-lg"
           >
-            Close
+            {t.common.close}
           </button>
         </div>
       </div>
@@ -177,8 +179,8 @@ export function ProSettings({ isOpen, onClose }: ProSettingsProps) {
       >
         {/* Header */}
         <div className="bg-[#1e3a5f] px-5 py-4 sticky top-0 z-10">
-          <h2 className="text-lg font-bold text-[#f5f0e8]">Pro Settings</h2>
-          <p className="text-[#f5f0e8]/70 text-sm">Customize your game experience</p>
+          <h2 className="text-lg font-bold text-[#f5f0e8]">{t.proSettings.title}</h2>
+          <p className="text-[#f5f0e8]/70 text-sm">{t.proSettings.languagesDesc}</p>
         </div>
 
         <div className="p-5 space-y-6">
@@ -186,9 +188,9 @@ export function ProSettings({ isOpen, onClose }: ProSettingsProps) {
           <div>
             <div className="flex items-center justify-between mb-3">
               <div>
-                <h3 className="font-medium text-[#1e3a5f]">Turn Timer</h3>
+                <h3 className="font-medium text-[#1e3a5f]">{t.proSettings.turnTimer}</h3>
                 <p className="text-sm text-[#1e3a5f]/60">
-                  Set a time limit for each turn
+                  {t.proSettings.turnTimerDesc}
                 </p>
               </div>
               <button
@@ -207,7 +209,7 @@ export function ProSettings({ isOpen, onClose }: ProSettingsProps) {
             
             {localSettings.timerEnabled && (
               <div className="flex items-center gap-3 bg-[#f5f0e8] rounded-lg p-3">
-                <span className="text-sm text-[#1e3a5f]">Minutes per turn:</span>
+                <span className="text-sm text-[#1e3a5f]">{t.proSettings.minutes}:</span>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => setLocalSettings({ 
@@ -237,34 +239,43 @@ export function ProSettings({ isOpen, onClose }: ProSettingsProps) {
             )}
           </div>
 
-          {/* Word Checker Toggle - Coming Soon */}
-          <div className="flex items-center justify-between opacity-50">
-            <div>
-              <h3 className="font-medium text-[#1e3a5f] flex items-center gap-2">
-                Word Checker
-                <span className="text-[10px] px-1.5 py-0.5 bg-[#c4a882]/30 text-[#1e3a5f]/70 rounded-full font-medium">
-                  Soon
-                </span>
-              </h3>
-              <p className="text-sm text-[#1e3a5f]/60">
-                Validate words against the dictionary
-              </p>
+          {/* Word Checker Toggle */}
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <h3 className="font-medium text-[#1e3a5f]">{t.proSettings.wordChecker}</h3>
+                <p className="text-sm text-[#1e3a5f]/60">
+                  {t.proSettings.wordCheckerDesc}
+                </p>
+              </div>
+              <button
+                onClick={() => setLocalSettings({ ...localSettings, wordChecker: !localSettings.wordChecker })}
+                className={`w-12 h-7 rounded-full transition-colors relative flex-shrink-0 ${
+                  localSettings.wordChecker ? 'bg-[#1e3a5f]' : 'bg-[#d4c4a8]'
+                }`}
+              >
+                <span 
+                  className={`absolute top-1 left-1 w-5 h-5 bg-white rounded-full transition-transform shadow-sm ${
+                    localSettings.wordChecker ? 'translate-x-5' : 'translate-x-0'
+                  }`}
+                />
+              </button>
             </div>
-            <button
-              disabled
-              className="w-12 h-7 rounded-full transition-colors relative flex-shrink-0 bg-[#d4c4a8] cursor-not-allowed"
-            >
-              <span 
-                className="absolute top-1 left-1 w-5 h-5 bg-white rounded-full shadow-sm"
-              />
-            </button>
+            
+            {localSettings.wordChecker && (
+              <div className="bg-[#f5f0e8] rounded-lg p-3">
+                <p className="text-xs text-[#1e3a5f]/70">
+                  When enabled, a &quot;Check&quot; button appears in the letter picker to validate words before placing them.
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Language Selection */}
           <div>
-            <h3 className="font-medium text-[#1e3a5f] mb-2">Languages</h3>
+            <h3 className="font-medium text-[#1e3a5f] mb-2">{t.proSettings.languages}</h3>
             <p className="text-sm text-[#1e3a5f]/60 mb-3">
-              Select languages for mixed-language games. Custom letters will be added.
+              {t.proSettings.languagesDesc}
             </p>
             
             <div className="space-y-2">
@@ -333,9 +344,9 @@ export function ProSettings({ isOpen, onClose }: ProSettingsProps) {
 
           {/* Saved Players */}
           <div>
-            <h3 className="font-medium text-[#1e3a5f] mb-2">Saved Players</h3>
+            <h3 className="font-medium text-[#1e3a5f] mb-2">{t.proSettings.savedPlayers}</h3>
             <p className="text-sm text-[#1e3a5f]/60 mb-3">
-              Save player names for quick selection when starting new games.
+              {t.proSettings.savedPlayersDesc}
             </p>
             
             {/* Add new player */}
@@ -345,7 +356,7 @@ export function ProSettings({ isOpen, onClose }: ProSettingsProps) {
                 value={newPlayerName}
                 onChange={(e) => setNewPlayerName(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleAddPlayer()}
-                placeholder="Player name..."
+                placeholder={t.proSettings.addPlayerName}
                 className="flex-1 px-3 py-2 rounded-lg border-2 border-[#e8dfd2] 
                   focus:border-[#1e3a5f] focus:outline-none bg-white
                   text-[#1e3a5f] placeholder-[#1e3a5f]/40 text-sm"
@@ -358,7 +369,7 @@ export function ProSettings({ isOpen, onClose }: ProSettingsProps) {
                   text-[#f5f0e8] font-medium rounded-lg transition-colors text-sm
                   disabled:opacity-40 disabled:cursor-not-allowed"
               >
-                Add
+                {t.common.add}
               </button>
             </div>
 
@@ -381,7 +392,7 @@ export function ProSettings({ isOpen, onClose }: ProSettingsProps) {
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-[#1e3a5f]/40 italic">No saved players yet</p>
+              <p className="text-sm text-[#1e3a5f]/40 italic">{t.proSettings.noSavedPlayers}</p>
             )}
           </div>
         </div>
@@ -395,14 +406,14 @@ export function ProSettings({ isOpen, onClose }: ProSettingsProps) {
               text-[#f5f0e8] font-bold rounded-lg transition-colors
               disabled:opacity-50"
           >
-            {isSaving ? 'Saving...' : 'Save Settings'}
+            {isSaving ? t.common.loading : t.common.save}
           </button>
           <button
             onClick={onClose}
             className="w-full py-2 px-4 text-[#1e3a5f]/50 hover:text-[#1e3a5f] 
               text-sm transition-colors"
           >
-            Cancel
+            {t.common.cancel}
           </button>
         </div>
       </div>

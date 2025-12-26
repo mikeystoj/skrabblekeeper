@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Player } from '@/lib/types';
 import { useGame } from '@/context/GameContext';
+import { useLanguage } from '@/context/LanguageContext';
 
 interface PlayerScoreCardProps {
   player: Player;
@@ -31,6 +32,7 @@ function EditIcon({ className }: { className?: string }) {
 
 export function PlayerScoreCard({ player, isCurrentPlayer, rank }: PlayerScoreCardProps) {
   const { dispatch } = useGame();
+  const { t } = useLanguage();
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(player.name);
 
@@ -97,7 +99,7 @@ export function PlayerScoreCard({ player, isCurrentPlayer, rank }: PlayerScoreCa
             )}
           </div>
           {isCurrentPlayer && !isEditing && (
-            <span className="text-xs text-[#1e3a5f] opacity-70 bg-[#e8dfd2] px-2 py-0.5 rounded-full">Current</span>
+            <span className="text-xs text-[#1e3a5f] opacity-70 bg-[#e8dfd2] px-2 py-0.5 rounded-full">{t.scoreView.currentPlayer}</span>
           )}
         </div>
         <div className="text-right">
@@ -112,13 +114,13 @@ export function PlayerScoreCard({ player, isCurrentPlayer, rank }: PlayerScoreCa
             onClick={handleSaveEdit}
             className="flex-1 py-1 px-2 bg-[#1e3a5f] text-[#f5f0e8] font-medium rounded text-sm"
           >
-            Save
+            {t.common.save}
           </button>
           <button
             onClick={handleCancelEdit}
             className="flex-1 py-1 px-2 bg-[#e8dfd2] text-[#1e3a5f] font-medium rounded text-sm"
           >
-            Cancel
+            {t.common.cancel}
           </button>
         </div>
       )}
@@ -126,23 +128,65 @@ export function PlayerScoreCard({ player, isCurrentPlayer, rank }: PlayerScoreCa
       {/* Word History */}
       <div className="border-t border-[#d4c4a8] pt-2">
         <h4 className="text-xs font-medium text-[#1e3a5f] opacity-70 mb-2">
-          Words ({player.words.length})
+          {t.scoreView.words} ({player.words.length})
         </h4>
         {player.words.length === 0 ? (
-          <p className="text-xs text-[#1e3a5f] opacity-50 italic">No words yet</p>
+          <p className="text-xs text-[#1e3a5f] opacity-50 italic">{t.scoreView.noWordsYet}</p>
         ) : (
           <div className="max-h-40 overflow-y-auto">
-            {/* 4 columns on desktop, 2 on tablet, stacked on mobile */}
             <div className="grid grid-cols-1 gap-1">
-              {player.words.slice().reverse().map((word) => (
-                <div 
-                  key={word.id}
-                  className="flex justify-between items-center text-xs py-1 px-2 bg-[#e8dfd2] rounded"
-                >
-                  <span className="font-medium text-[#1e3a5f] truncate mr-1">{word.word}</span>
-                  <span className="text-[#1e3a5f] font-bold flex-shrink-0">+{word.score}</span>
-                </div>
-              ))}
+              {player.words.slice().reverse().map((word) => {
+                // Check if we have a breakdown with individual scores
+                const hasBreakdown = word.breakdown && word.breakdown.length > 1;
+                // Fallback: check if this is a multi-word entry (contains " + ")
+                const isMultiWord = word.word.includes(' + ');
+                const wordParts = isMultiWord ? word.word.split(' + ') : [word.word];
+                
+                return (
+                  <div 
+                    key={word.id}
+                    className="text-xs py-1.5 px-2 bg-[#e8dfd2] rounded"
+                  >
+                    {/* Main word and total score */}
+                    <div className="flex justify-between items-center">
+                      <span className="font-bold text-[#1e3a5f]">
+                        {hasBreakdown ? word.breakdown![0].word : wordParts[0]}
+                      </span>
+                      <span className="text-[#1e3a5f] font-bold flex-shrink-0">+{word.score}</span>
+                    </div>
+                    
+                    {/* Show breakdown with individual scores if available */}
+                    {hasBreakdown && word.breakdown!.length > 1 && (
+                      <div className="mt-1 pt-1 border-t border-[#d4c4a8]/50">
+                        <div className="flex flex-wrap gap-1 items-center">
+                          <span className="text-[10px] text-[#1e3a5f]/50 italic">breakdown:</span>
+                          {word.breakdown!.map((item, idx) => (
+                            <span 
+                              key={idx}
+                              className="text-[10px] px-1.5 py-0.5 bg-[#d4c4a8]/60 rounded text-[#1e3a5f]/80"
+                            >
+                              {item.word} <span className="font-bold">+{item.score}</span>
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Fallback: Show bonus words without individual scores (for old data) */}
+                    {!hasBreakdown && isMultiWord && wordParts.length > 1 && (
+                      <div className="mt-1 text-[10px] text-[#1e3a5f]/60">
+                        <span className="italic">also formed: </span>
+                        {wordParts.slice(1).map((part, idx) => (
+                          <span key={idx}>
+                            <span className="font-medium text-[#1e3a5f]/80">{part}</span>
+                            {idx < wordParts.length - 2 && ', '}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}

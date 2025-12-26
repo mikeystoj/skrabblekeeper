@@ -1,16 +1,12 @@
 'use client';
 
+import { useLanguage } from '@/context/LanguageContext';
+
 export function Footer() {
-  const funnyPhrases = [
-    "Warning: May cause heated family arguments",
-    "Triple word scores won't fix your marriage",
-    "Scrabble: Where 'QI' is a real word and 'ZYZZYVA' is a flex",
-    "Side effects include: dictionary addiction",
-    "Making up words since 1938... wait, that's not allowed",
-  ];
+  const { t } = useLanguage();
 
   // Pick a random phrase on each render (client-side only)
-  const randomPhrase = funnyPhrases[Math.floor(Math.random() * funnyPhrases.length)];
+  const randomPhrase = t.footer.funnyPhrases[Math.floor(Math.random() * t.footer.funnyPhrases.length)];
 
   return (
     <footer className="py-6 px-4 mt-8">
@@ -19,11 +15,19 @@ export function Footer() {
           {randomPhrase}
         </p>
         <p className="text-[#1e3a5f]/40 text-xs">
-          Made by{' '}
+          {t.footer.madeBy}{' '}
           <span className="font-bold text-[#1e3a5f]/60 hover:text-[#1e3a5f] transition-colors cursor-pointer">
             Mayke
           </span>
-          {' '}• © {new Date().getFullYear()} Skrabble Keeper • Not affiliated with Scrabble® or Hasbro®
+          {' '}• © {new Date().getFullYear()} Skrabble Keeper •{' '}
+          <a 
+            href="https://x.com/skrabblekeeper" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="font-medium text-[#1e3a5f]/60 hover:text-[#1e3a5f] transition-colors"
+          >
+            @skrabblekeeper
+          </a>
         </p>
       </div>
     </footer>

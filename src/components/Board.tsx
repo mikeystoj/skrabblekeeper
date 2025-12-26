@@ -2,8 +2,8 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { useGame } from '@/context/GameContext';
+import { useLanguage } from '@/context/LanguageContext';
 import { BoardSquare } from './BoardSquare';
-import { LetterPicker } from '@/components/LetterPicker';
 import { BOARD_SIZE, LETTER_VALUES, BOARD_LAYOUT, BINGO_BONUS } from '@/lib/constants';
 import { Direction, PlacedTile } from '@/lib/types';
 
@@ -14,7 +14,7 @@ interface PreviewSquare {
 }
 
 // Confetti component for Bingo celebration
-function BingoConfetti({ onComplete }: { onComplete: () => void }) {
+function BingoConfetti({ onComplete, t }: { onComplete: () => void; t: { title: string; subtitle: string; bonusPoints: string; letsGo: string } }) {
   useEffect(() => {
     const timer = setTimeout(onComplete, 4000);
     return () => clearTimeout(timer);
@@ -71,14 +71,14 @@ function BingoConfetti({ onComplete }: { onComplete: () => void }) {
           onClick={onComplete}
         >
           <div className="text-4xl mb-2">🎉</div>
-          <h2 className="text-2xl font-bold mb-1">LEGENDARY!</h2>
-          <p className="text-[#c4a882] font-medium">All 7 letters used!</p>
-          <p className="text-[#f5f0e8]/70 text-sm mt-2">+{BINGO_BONUS} bonus points</p>
+          <h2 className="text-2xl font-bold mb-1">{t.title}</h2>
+          <p className="text-[#c4a882] font-medium">{t.subtitle}</p>
+          <p className="text-[#f5f0e8]/70 text-sm mt-2">+{BINGO_BONUS} {t.bonusPoints}</p>
           <button 
             className="mt-4 px-4 py-2 bg-[#c4a882] hover:bg-[#b39872] text-[#1e3a5f] 
               font-bold rounded-lg transition-colors text-sm"
           >
-            LETS GO!
+            {t.letsGo}
           </button>
         </div>
       </div>
@@ -88,6 +88,7 @@ function BingoConfetti({ onComplete }: { onComplete: () => void }) {
 
 export function Board() {
   const { state, dispatch } = useGame();
+  const { t } = useLanguage();
   const [selectedSquare, setSelectedSquare] = useState<{ row: number; col: number } | null>(null);
   const [previewWord, setPreviewWord] = useState('');
   const [previewDirection, setPreviewDirection] = useState<Direction>('horizontal');
@@ -174,9 +175,9 @@ export function Board() {
     startRow: number, 
     startCol: number, 
     dir: Direction
-  ): { totalScore: number; wordDisplay: string; isBingo: boolean } => {
-    // Build the tiles that will be placed
-    const newTiles: { letter: string; row: number; col: number; isNew: boolean }[] = [];
+  ): { totalScore: number; wordDisplay: string; isBingo: boolean; breakdown: { word: string; score: number }[] } => {
+    // First, build the tiles that will be placed (just the input word positions)
+    const placedTiles: { letter: string; row: number; col: number; isNew: boolean }[] = [];
     let row = startRow;
     let col = startCol;
     
@@ -188,7 +189,7 @@ export function Board() {
       
       if (existingTile) {
         // Existing tile - include in word but not as new
-        newTiles.push({
+        placedTiles.push({
           letter: (existingTile as PlacedTile).letter,
           row,
           col,
@@ -196,7 +197,7 @@ export function Board() {
         });
       } else {
         // New tile
-        newTiles.push({
+        placedTiles.push({
           letter,
           row,
           col,
@@ -210,6 +211,75 @@ export function Board() {
         row++;
       }
     }
+    
+    // Now find the FULL main word including prefix and suffix tiles
+    const newTiles: { letter: string; row: number; col: number; isNew: boolean }[] = [];
+    
+    // Find prefix tiles (tiles before the start position)
+    let prefixRow = startRow;
+    let prefixCol = startCol;
+    const prefixTiles: { letter: string; row: number; col: number; isNew: boolean }[] = [];
+    
+    if (dir === 'horizontal') {
+      prefixCol--;
+      while (prefixCol >= 0 && state.board[prefixRow][prefixCol]) {
+        const tile = state.board[prefixRow][prefixCol] as PlacedTile;
+        prefixTiles.unshift({
+          letter: tile.letter,
+          row: prefixRow,
+          col: prefixCol,
+          isNew: false,
+        });
+        prefixCol--;
+      }
+    } else {
+      prefixRow--;
+      while (prefixRow >= 0 && state.board[prefixRow][prefixCol]) {
+        const tile = state.board[prefixRow][prefixCol] as PlacedTile;
+        prefixTiles.unshift({
+          letter: tile.letter,
+          row: prefixRow,
+          col: prefixCol,
+          isNew: false,
+        });
+        prefixRow--;
+      }
+    }
+    
+    // Find suffix tiles (tiles after the placed word ends)
+    const lastPlaced = placedTiles[placedTiles.length - 1];
+    let suffixRow = lastPlaced ? lastPlaced.row : startRow;
+    let suffixCol = lastPlaced ? lastPlaced.col : startCol;
+    const suffixTiles: { letter: string; row: number; col: number; isNew: boolean }[] = [];
+    
+    if (dir === 'horizontal') {
+      suffixCol++;
+      while (suffixCol < BOARD_SIZE && state.board[suffixRow][suffixCol]) {
+        const tile = state.board[suffixRow][suffixCol] as PlacedTile;
+        suffixTiles.push({
+          letter: tile.letter,
+          row: suffixRow,
+          col: suffixCol,
+          isNew: false,
+        });
+        suffixCol++;
+      }
+    } else {
+      suffixRow++;
+      while (suffixRow < BOARD_SIZE && state.board[suffixRow][suffixCol]) {
+        const tile = state.board[suffixRow][suffixCol] as PlacedTile;
+        suffixTiles.push({
+          letter: tile.letter,
+          row: suffixRow,
+          col: suffixCol,
+          isNew: false,
+        });
+        suffixRow++;
+      }
+    }
+    
+    // Combine: prefix + placed + suffix = full main word
+    newTiles.push(...prefixTiles, ...placedTiles, ...suffixTiles);
 
     // Calculate main word score
     let mainWordScore = 0;
@@ -335,7 +405,9 @@ export function Board() {
     }
     
     // Calculate total
-    let totalScore = mainWordScore + perpWords.reduce((sum, w) => sum + w.score, 0);
+    // Only count main word if it has 2+ letters (single letters aren't words)
+    const mainWordIsValid = newTiles.length >= 2;
+    let totalScore = (mainWordIsValid ? mainWordScore : 0) + perpWords.reduce((sum, w) => sum + w.score, 0);
     
     // Check for bingo (7 tiles placed)
     const newTileCount = newTiles.filter(t => t.isNew).length;
@@ -344,18 +416,32 @@ export function Board() {
       totalScore += BINGO_BONUS;
     }
     
-    // Build word display
+    // Build word display and breakdown
     const mainWord = newTiles.map(t => t.letter.toUpperCase()).join('');
-    const allWords = [mainWord, ...perpWords.map(w => w.word)];
+    
+    // Build breakdown with individual scores
+    // Note: mainWordScore is already multiplied by wordMultiplier at this point
+    const breakdown: { word: string; score: number }[] = [];
+    if (mainWordIsValid) {
+      breakdown.push({ word: mainWord, score: mainWordScore });
+    }
+    perpWords.forEach(w => {
+      breakdown.push({ word: w.word, score: w.score });
+    });
+    
+    // Only include main word in display if it's valid (2+ letters)
+    const allWords = mainWordIsValid 
+      ? [mainWord, ...perpWords.map(w => w.word)]
+      : perpWords.map(w => w.word);
     const wordDisplay = allWords.join(' + ');
     
-    return { totalScore, wordDisplay, isBingo };
+    return { totalScore, wordDisplay, isBingo, breakdown };
   };
 
   const handlePlaceWord = (word: string, direction: Direction) => {
     if (selectedSquare) {
       // Calculate score before placing
-      const { totalScore, wordDisplay, isBingo } = calculatePlacedWordScore(
+      const { totalScore, wordDisplay, isBingo, breakdown } = calculatePlacedWordScore(
         word, 
         selectedSquare.row, 
         selectedSquare.col, 
@@ -383,6 +469,7 @@ export function Board() {
           type: 'SUBMIT_WORD',
           word: wordDisplay,
           score: totalScore,
+          breakdown: breakdown.length > 1 ? breakdown : undefined,
         });
       }, 0);
       
@@ -417,7 +504,7 @@ export function Board() {
     <div className="relative">
       {/* Bingo Celebration */}
       {showBingoCelebration && (
-        <BingoConfetti onComplete={() => setShowBingoCelebration(false)} />
+        <BingoConfetti onComplete={() => setShowBingoCelebration(false)} t={t.bingo} />
       )}
 
       {/* Board Grid */}
@@ -535,8 +622,13 @@ function LetterPickerEnhanced({
   const [word, setWord] = useStateEnhanced('');
   const [direction, setDirection] = useStateEnhanced<Direction>('horizontal');
   const [showBlankPicker, setShowBlankPicker] = useStateEnhanced(false);
+  const [wordCheckStatus, setWordCheckStatus] = useStateEnhanced<'idle' | 'checking' | 'valid' | 'invalid'>('idle');
+  const [wordCheckError, setWordCheckError] = useStateEnhanced<string | null>(null);
   const modalRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Word checker enabled check
+  const wordCheckerEnabled = isPro && settings.wordChecker;
 
   // Build custom letters from selected languages
   const customLetters: Record<string, { value: number; count: number }> = useMemoEnhanced(() => {
@@ -758,23 +850,47 @@ function LetterPickerEnhanced({
   }, [onClose]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Allow uppercase letters and custom letters
+    // Valid characters (uppercase only for typing - blank tiles come from picker)
     const validChars = new Set([...ALPHABET, ...customLettersList]);
-    const value = e.target.value.toUpperCase();
+    const value = e.target.value;
     let filtered = '';
-    for (const char of value) {
-      if (validChars.has(char)) {
-        filtered += char;
+    
+    // We need to preserve existing blank tiles (lowercase) while converting new input to uppercase
+    // Compare character by character with current word to preserve blanks
+    for (let i = 0; i < value.length; i++) {
+      const char = value[i];
+      const upperChar = char.toUpperCase();
+      
+      // Check if this position had a blank tile in the original word
+      // (blank tiles are lowercase in our word state)
+      if (i < word.length && word[i] === word[i].toLowerCase() && word[i] !== word[i].toUpperCase()) {
+        // This was a blank tile - keep it if the letter matches
+        if (word[i].toUpperCase() === upperChar) {
+          filtered += word[i]; // Keep the lowercase (blank) version
+          continue;
+        }
+      }
+      
+      // For new/changed characters, convert to uppercase (regular tiles)
+      if (validChars.has(upperChar)) {
+        filtered += upperChar;
       }
     }
+    
     const maxLength = direction === 'horizontal' ? horizontalSpaces : verticalSpaces;
-    setWord(filtered.slice(0, maxLength));
+    const newWord = filtered.slice(0, maxLength);
+    setWord(newWord);
+    // Reset word check status when word changes
+    if (newWord !== word) {
+      setWordCheckStatus('idle');
+    }
   };
 
   const handleLetterClick = (letter: string) => {
     const maxLength = direction === 'horizontal' ? horizontalSpaces : verticalSpaces;
     if (word.length < maxLength) {
       setWord(prev => prev + letter);
+      setWordCheckStatus('idle'); // Reset word check when word changes
     }
     inputRef.current?.focus();
   };
@@ -790,12 +906,92 @@ function LetterPickerEnhanced({
     // Add as lowercase to indicate it's a blank tile
     setWord(prev => prev + letter.toLowerCase());
     setShowBlankPicker(false);
+    setWordCheckStatus('idle'); // Reset word check when word changes
     inputRef.current?.focus();
   };
 
   const handleBackspace = () => {
     setWord(prev => prev.slice(0, -1));
+    setWordCheckStatus('idle'); // Reset word check when word changes
     inputRef.current?.focus();
+  };
+
+  // Build the full word including prefix and suffix tiles from board
+  const getFullWordForCheck = useCallback((): string => {
+    // Find prefix tiles (tiles before the start position)
+    let prefixRow = startRow;
+    let prefixCol = startCol;
+    let prefix = '';
+    
+    if (direction === 'horizontal') {
+      prefixCol--;
+      while (prefixCol >= 0 && board[prefixRow][prefixCol]) {
+        const tile = board[prefixRow][prefixCol] as { letter: string };
+        prefix = tile.letter + prefix;
+        prefixCol--;
+      }
+    } else {
+      prefixRow--;
+      while (prefixRow >= 0 && board[prefixRow][prefixCol]) {
+        const tile = board[prefixRow][prefixCol] as { letter: string };
+        prefix = tile.letter + prefix;
+        prefixRow--;
+      }
+    }
+    
+    // Find suffix tiles (tiles after the word ends)
+    // First, walk through the typed word to find where it ends
+    let endRow = startRow;
+    let endCol = startCol;
+    for (let i = 0; i < word.length; i++) {
+      if (direction === 'horizontal') {
+        endCol++;
+      } else {
+        endRow++;
+      }
+    }
+    
+    let suffix = '';
+    if (direction === 'horizontal') {
+      while (endCol < BOARD_SIZE && board[endRow][endCol]) {
+        const tile = board[endRow][endCol] as { letter: string };
+        suffix += tile.letter;
+        endCol++;
+      }
+    } else {
+      while (endRow < BOARD_SIZE && board[endRow][endCol]) {
+        const tile = board[endRow][endCol] as { letter: string };
+        suffix += tile.letter;
+        endRow++;
+      }
+    }
+    
+    return prefix + word.toUpperCase() + suffix;
+  }, [board, startRow, startCol, direction, word]);
+
+  // Check word against dictionary API
+  const handleCheckWord = async () => {
+    const fullWord = getFullWordForCheck();
+    if (fullWord.length < 2) return;
+    
+    setWordCheckStatus('checking');
+    setWordCheckError(null);
+    
+    try {
+      const response = await fetch(`/api/check-word?word=${encodeURIComponent(fullWord)}`);
+      const data = await response.json();
+      
+      if (response.ok) {
+        setWordCheckStatus(data.isValid ? 'valid' : 'invalid');
+      } else {
+        setWordCheckError(data.error || 'Check failed');
+        setWordCheckStatus('idle');
+      }
+    } catch (error) {
+      console.error('Word check error:', error);
+      setWordCheckError('Network error');
+      setWordCheckStatus('idle');
+    }
   };
 
   const handleSubmit = () => {
@@ -828,10 +1024,17 @@ function LetterPickerEnhanced({
     return LETTER_VALUES[upperLetter] || 0;
   };
 
-  // Calculate score preview (blank tiles = lowercase = 0 points)
+  // Calculate score preview (only count NEW tiles, not existing ones)
   const calculatePreviewScore = (): number => {
     let score = 0;
-    for (const letter of word) {
+    for (let i = 0; i < word.length; i++) {
+      const letter = word[i];
+      // Check if this position is an intersection (existing tile)
+      const intersection = intersections.find(int => int.position === i);
+      if (intersection) {
+        // Skip existing tiles - they don't add to your score
+        continue;
+      }
       // Lowercase letters are blank tiles worth 0 points
       if (isBlankTile(letter)) {
         score += 0;
@@ -890,21 +1093,65 @@ function LetterPickerEnhanced({
 
         {/* Word Input */}
         <div className="mb-3">
-          <input
-            ref={inputRef}
-            type="text"
-            value={word}
-            onChange={handleInputChange}
-            onKeyDown={handleKeyDown}
-            placeholder="Type letters..."
-            className="w-full px-3 py-2 text-lg font-bold tracking-widest text-center
-              border border-[#d4c4a8] rounded-md focus:outline-none focus:ring-1 focus:ring-[#1e3a5f]
-              text-[#1e3a5f] bg-white uppercase"
-            maxLength={maxLength}
-          />
-          <p className="text-xs text-[#1e3a5f] opacity-60 mt-1 text-center">
-            {word.length}/{maxLength} letters
-          </p>
+          <div className="flex gap-2">
+            <input
+              ref={inputRef}
+              type="text"
+              value={word}
+              onChange={handleInputChange}
+              onKeyDown={handleKeyDown}
+              placeholder="Type letters..."
+              className={`flex-1 px-3 py-2 text-lg font-bold tracking-widest text-center
+                border rounded-md focus:outline-none focus:ring-1 focus:ring-[#1e3a5f]
+                text-[#1e3a5f] bg-white uppercase
+                ${wordCheckStatus === 'valid' ? 'border-green-500 bg-green-50' : 
+                  wordCheckStatus === 'invalid' ? 'border-red-400 bg-red-50' : 
+                  'border-[#d4c4a8]'}`}
+              maxLength={maxLength}
+            />
+            {/* Check Word Button - Only show if word checker is enabled */}
+            {wordCheckerEnabled && word.length >= 2 && (
+              <button
+                onClick={handleCheckWord}
+                disabled={wordCheckStatus === 'checking'}
+                className={`px-3 py-2 rounded-md font-medium text-sm transition-all whitespace-nowrap
+                  ${wordCheckStatus === 'checking' 
+                    ? 'bg-[#e8dfd2] text-[#1e3a5f]/50 cursor-wait' 
+                    : wordCheckStatus === 'valid'
+                      ? 'bg-green-500 text-white'
+                      : wordCheckStatus === 'invalid'
+                        ? 'bg-red-400 text-white'
+                        : 'bg-[#c4a882] hover:bg-[#b39872] text-[#1e3a5f]'
+                  }`}
+              >
+                {wordCheckStatus === 'checking' ? '...' : 
+                 wordCheckStatus === 'valid' ? '✓' : 
+                 wordCheckStatus === 'invalid' ? '✗' : 
+                 'Check'}
+              </button>
+            )}
+          </div>
+          <div className="flex items-center justify-between mt-1">
+            <p className="text-xs text-[#1e3a5f] opacity-60">
+              {word.length}/{maxLength} letters
+              {/* Show full word being checked if there are prefix/suffix tiles */}
+              {wordCheckerEnabled && word.length > 0 && getFullWordForCheck() !== word.toUpperCase() && (
+                <span className="ml-2 text-[#1e3a5f]/80">
+                  (checking: <strong>{getFullWordForCheck()}</strong>)
+                </span>
+              )}
+            </p>
+            {/* Word check status message */}
+            {wordCheckerEnabled && wordCheckStatus === 'valid' && (
+              <p className="text-xs text-green-600 font-medium">✓ Valid: {getFullWordForCheck()}</p>
+            )}
+            {wordCheckerEnabled && wordCheckStatus === 'invalid' && (
+              <p className="text-xs text-red-500 font-medium">✗ Not found: {getFullWordForCheck()}</p>
+            )}
+            {wordCheckError && (
+              <p className="text-xs text-amber-600">{wordCheckError}</p>
+            )}
+          </div>
         </div>
 
         {/* Word Preview */}
@@ -919,7 +1166,7 @@ function LetterPickerEnhanced({
                 {word.split('').map((letter, i) => {
                   const intersection = intersections.find(int => int.position === i);
                   const isConflict = intersection && !intersection.matches;
-                  const isMatch = intersection && intersection.matches;
+                  const isExisting = intersection && intersection.matches; // Tile already on board
                   const isBlank = isBlankTile(letter);
                   
                   return (
@@ -929,17 +1176,20 @@ function LetterPickerEnhanced({
                         font-bold text-sm relative
                         ${isConflict 
                           ? 'bg-red-500 text-white' 
-                          : isMatch
-                            ? 'bg-[#3d5a80] text-[#f5f0e8]'
+                          : isExisting
+                            ? 'bg-[#d4c4a8] text-[#1e3a5f] opacity-60' // Existing tile - muted
                             : isBlank
                               ? 'bg-stone-200 text-stone-700 border-2 border-dashed border-stone-400'
-                              : 'bg-[#1e3a5f] text-[#f5f0e8]'
+                              : 'bg-[#1e3a5f] text-[#f5f0e8]' // New tile - prominent
                         }`}
+                      title={isExisting ? 'Already on board' : 'New tile'}
                     >
                       {letter.toUpperCase()}
-                      <span className="absolute bottom-0 right-0.5 text-[7px] opacity-60">
-                        {isBlank ? '0' : getLetterValue(letter)}
-                      </span>
+                      {!isExisting && (
+                        <span className="absolute bottom-0 right-0.5 text-[7px] opacity-60">
+                          {isBlank ? '0' : getLetterValue(letter)}
+                        </span>
+                      )}
                     </div>
                   );
                 })}

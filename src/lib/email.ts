@@ -74,7 +74,6 @@ export async function sendLicenseEmail(
                 <ul style="color: #1e3a5f; font-size: 13px; margin: 0; padding-left: 20px; line-height: 1.8;">
                   <li>Dictionary validation</li>
                   <li>Game history & stats</li>
-                  <li>Predictive word helper</li>
                   <li>Word lookup</li>
                   <li>Multi-lingual support</li>
                   <li>Turn timer</li>

@@ -64,6 +64,19 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       return { ...state, players };
     }
 
+    case 'REORDER_PLAYERS': {
+      const { fromIndex, toIndex } = action;
+      const players = [...state.players];
+      const [movedPlayer] = players.splice(fromIndex, 1);
+      players.splice(toIndex, 0, movedPlayer);
+      // Update currentPlayerId to the first player after reorder
+      return { 
+        ...state, 
+        players,
+        currentPlayerId: players[0]?.id || null,
+      };
+    }
+
     case 'SET_CURRENT_PLAYER': {
       return { ...state, currentPlayerId: action.playerId };
     }
@@ -161,6 +174,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         score: action.score,
         tiles: state.pendingTiles.map(t => ({ ...t, isPending: false })),
         timestamp: Date.now(),
+        breakdown: action.breakdown,
       };
 
       // Commit pending tiles to the board
@@ -202,7 +216,13 @@ function gameReducer(state: GameState, action: GameAction): GameState {
           // Silently fail - don't block game start
         });
       }
-      return { ...state, gameStarted: true };
+      // Ensure the first player in the list is set as current player
+      // This establishes the turn order based on how players were added
+      return { 
+        ...state, 
+        gameStarted: true,
+        currentPlayerId: state.players[0]?.id || state.currentPlayerId,
+      };
     }
 
     case 'UNDO_LAST_WORD': {

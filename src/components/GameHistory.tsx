@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { usePro, GameHistoryEntry } from '@/context/ProContext';
+import { useLanguage } from '@/context/LanguageContext';
 import {
   TrophyIcon,
   ChartBarIcon,
@@ -203,6 +204,7 @@ function GameCard({ game }: { game: GameHistoryEntry }) {
 
 export function GameHistory({ isOpen, onClose }: GameHistoryProps) {
   const { isPro, gameHistory, isLoadingHistory, loadGameHistory } = usePro();
+  const { t } = useLanguage();
 
   useEffect(() => {
     if (isOpen && isPro) {
@@ -227,7 +229,7 @@ export function GameHistory({ isOpen, onClose }: GameHistoryProps) {
             onClick={onClose}
             className="mt-4 py-2 px-4 bg-[#1e3a5f] text-[#f5f0e8] rounded-lg"
           >
-            Close
+            {t.common.close}
           </button>
         </div>
       </div>
@@ -256,15 +258,15 @@ export function GameHistory({ isOpen, onClose }: GameHistoryProps) {
       >
         {/* Header */}
         <div className="bg-[#1e3a5f] px-5 py-4">
-          <h2 className="text-lg font-bold text-[#f5f0e8]">Game History</h2>
-          <p className="text-[#f5f0e8]/70 text-sm">Your past games</p>
+          <h2 className="text-lg font-bold text-[#f5f0e8]">{t.gameHistory.title}</h2>
+          <p className="text-[#f5f0e8]/70 text-sm">{t.gameHistory.noGames.split(' ')[0]} {t.gameHistory.players.toLowerCase()}</p>
         </div>
 
         {/* Stats */}
         <div className="px-5 py-4 bg-[#f5f0e8] border-b border-[#e8dfd2] flex justify-around">
           <div className="text-center">
             <p className="text-2xl font-bold text-[#1e3a5f]">{totalGames}</p>
-            <p className="text-xs text-[#1e3a5f]/50">Games</p>
+            <p className="text-xs text-[#1e3a5f]/50">{t.gameHistory.players}</p>
           </div>
           <div className="text-center">
             <p className="text-2xl font-bold text-[#1e3a5f]">{avgScore}</p>
@@ -278,14 +280,14 @@ export function GameHistory({ isOpen, onClose }: GameHistoryProps) {
             <div className="text-center py-8">
               <div className="w-8 h-8 border-3 border-[#1e3a5f] border-t-transparent 
                 rounded-full animate-spin mx-auto mb-2"></div>
-              <p className="text-sm text-[#1e3a5f]/50">Loading history...</p>
+              <p className="text-sm text-[#1e3a5f]/50">{t.common.loading}</p>
             </div>
           ) : gameHistory.length === 0 ? (
             <div className="text-center py-8">
               <ChartBarIcon className="w-12 h-12 text-[#1e3a5f]/30 mx-auto mb-2" />
-              <p className="text-[#1e3a5f] font-medium">No games yet</p>
+              <p className="text-[#1e3a5f] font-medium">{t.gameHistory.noGames}</p>
               <p className="text-sm text-[#1e3a5f]/50">
-                Complete a game to see it here
+                {t.gameHistory.noGames}
               </p>
             </div>
           ) : (
@@ -302,7 +304,7 @@ export function GameHistory({ isOpen, onClose }: GameHistoryProps) {
             className="w-full py-2.5 px-4 bg-[#1e3a5f] hover:bg-[#162d4d] 
               text-[#f5f0e8] font-medium rounded-lg transition-colors"
           >
-            Close
+            {t.common.close}
           </button>
         </div>
       </div>

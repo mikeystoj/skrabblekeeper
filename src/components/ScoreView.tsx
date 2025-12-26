@@ -1,10 +1,12 @@
 'use client';
 
 import { useGame } from '@/context/GameContext';
+import { useLanguage } from '@/context/LanguageContext';
 import { PlayerScoreCard } from './PlayerScoreCard';
 
 export function ScoreView() {
   const { state } = useGame();
+  const { t } = useLanguage();
 
   // Sort players by score for ranking
   const sortedPlayers = [...state.players].sort((a, b) => b.score - a.score);
@@ -18,12 +20,12 @@ export function ScoreView() {
   return (
     <div className="max-w-xl mx-auto p-3">
       <h2 className="text-xl font-bold text-[#1e3a5f] mb-4 text-center">
-        Scores
+        {t.scoreView.words}
       </h2>
 
       {state.players.length === 0 ? (
         <div className="text-center text-[#1e3a5f] opacity-60 py-8">
-          No players added yet
+          {t.scoreView.noWordsYet}
         </div>
       ) : (
         <div className="space-y-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -46,13 +48,13 @@ export function ScoreView() {
               <div className="text-xl font-bold text-[#1e3a5f]">
                 {state.players.reduce((sum, p) => sum + p.score, 0)}
               </div>
-              <div className="text-xs text-[#1e3a5f] opacity-70">Total</div>
+              <div className="text-xs text-[#1e3a5f] opacity-70">{t.scoreView.totalScore}</div>
             </div>
             <div>
               <div className="text-xl font-bold text-[#1e3a5f]">
                 {state.players.reduce((sum, p) => sum + p.words.length, 0)}
               </div>
-              <div className="text-xs text-[#1e3a5f] opacity-70">Words</div>
+              <div className="text-xs text-[#1e3a5f] opacity-70">{t.scoreView.words}</div>
             </div>
             <div>
               <div className="text-xl font-bold text-[#1e3a5f]">

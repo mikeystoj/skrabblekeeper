@@ -1,18 +1,24 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useGame } from '@/context/GameContext';
 import { usePro } from '@/context/ProContext';
+import { useLanguage } from '@/context/LanguageContext';
 import { MAX_PLAYERS } from '@/lib/constants';
 import {
   XMarkIcon,
   PlusIcon,
+  Bars2Icon,
 } from '@heroicons/react/24/outline';
 
 export function PlayerSetup() {
   const { state, dispatch } = useGame();
   const { isPro, settings, updateSettings } = usePro();
+  const { t } = useLanguage();
   const [newPlayerName, setNewPlayerName] = useState('');
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  const dragNodeRef = useRef<HTMLDivElement | null>(null);
 
   const savedPlayers = settings.savedPlayers || [];
   const availableSavedPlayers = savedPlayers.filter(
@@ -51,17 +57,76 @@ export function PlayerSetup() {
     }
   };
 
+  // Drag and drop handlers
+  const handleDragStart = (e: React.DragEvent<HTMLDivElement>, index: number) => {
+    setDraggedIndex(index);
+    dragNodeRef.current = e.currentTarget;
+    e.dataTransfer.effectAllowed = 'move';
+    // Add a slight delay to allow the drag image to be captured
+    setTimeout(() => {
+      if (dragNodeRef.current) {
+        dragNodeRef.current.style.opacity = '0.5';
+      }
+    }, 0);
+  };
+
+  const handleDragEnd = () => {
+    if (dragNodeRef.current) {
+      dragNodeRef.current.style.opacity = '1';
+    }
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+    dragNodeRef.current = null;
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>, index: number) => {
+    e.preventDefault();
+    if (draggedIndex === null || draggedIndex === index) return;
+    setDragOverIndex(index);
+  };
+
+  const handleDragLeave = () => {
+    setDragOverIndex(null);
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>, toIndex: number) => {
+    e.preventDefault();
+    if (draggedIndex === null || draggedIndex === toIndex) return;
+    
+    dispatch({ 
+      type: 'REORDER_PLAYERS', 
+      fromIndex: draggedIndex, 
+      toIndex 
+    });
+    
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+  };
+
+  // Mobile reorder handlers
+  const handleMoveUp = (index: number) => {
+    if (index > 0) {
+      dispatch({ type: 'REORDER_PLAYERS', fromIndex: index, toIndex: index - 1 });
+    }
+  };
+
+  const handleMoveDown = (index: number) => {
+    if (index < state.players.length - 1) {
+      dispatch({ type: 'REORDER_PLAYERS', fromIndex: index, toIndex: index + 1 });
+    }
+  };
+
   return (
     <div className="max-w-sm mx-auto p-4">
       <div className="bg-[#faf8f5] rounded-lg shadow-md p-5">
         <h2 className="text-xl font-bold text-[#1e3a5f] mb-4 text-center">
-          Add Players
+          {t.playerSetup.addPlayer}
         </h2>
 
         {/* Saved Players Quick Add (Pro only) */}
         {isPro && availableSavedPlayers.length > 0 && state.players.length < MAX_PLAYERS && (
           <div className="mb-4">
-            <p className="text-xs text-[#1e3a5f]/60 mb-2">Quick add saved players:</p>
+            <p className="text-xs text-[#1e3a5f]/60 mb-2">{t.playerSetup.savedPlayers}</p>
             <div className="flex flex-wrap gap-2">
               {availableSavedPlayers.map((name) => (
                 <button
@@ -86,7 +151,7 @@ export function PlayerSetup() {
               type="text"
               value={newPlayerName}
               onChange={(e) => setNewPlayerName(e.target.value)}
-              placeholder="Player name..."
+              placeholder={t.playerSetup.enterName}
               maxLength={20}
               className="flex-1 px-3 py-2 border border-[#d4c4a8] rounded-md 
                 focus:outline-none focus:ring-1 focus:ring-[#1e3a5f]
@@ -98,36 +163,86 @@ export function PlayerSetup() {
               className="px-4 py-2 bg-[#1e3a5f] hover:bg-[#162d4d] disabled:opacity-40
                 text-[#f5f0e8] font-medium rounded-md transition-colors disabled:cursor-not-allowed"
             >
-              Add
+              {t.common.add}
             </button>
           </div>
           <p className="text-xs text-[#1e3a5f] mt-2 opacity-70">
-            {state.players.length}/{MAX_PLAYERS} players
-            {isPro && <span className="ml-2">• New names auto-saved</span>}
+            {state.players.length}/{MAX_PLAYERS} {t.playerSetup.title.toLowerCase()}
           </p>
         </form>
 
         {/* Player List */}
         {state.players.length > 0 && (
           <div className="space-y-2 mb-4">
+            <p className="text-xs text-[#1e3a5f]/60 mb-1">
+              {t.playerSetup.turnOrder} {state.players.length > 1 && t.playerSetup.dragToReorder}:
+            </p>
             {state.players.map((player, index) => (
               <div
                 key={player.id}
-                className="flex items-center justify-between p-2 bg-[#e8dfd2] rounded-md"
+                draggable={state.players.length > 1}
+                onDragStart={(e) => handleDragStart(e, index)}
+                onDragEnd={handleDragEnd}
+                onDragOver={(e) => handleDragOver(e, index)}
+                onDragLeave={handleDragLeave}
+                onDrop={(e) => handleDrop(e, index)}
+                className={`flex items-center justify-between p-2 rounded-md transition-all ${
+                  index === 0 ? 'bg-[#1e3a5f]/10 ring-1 ring-[#1e3a5f]/30' : 'bg-[#e8dfd2]'
+                } ${draggedIndex === index ? 'opacity-50' : ''} 
+                  ${dragOverIndex === index ? 'ring-2 ring-[#1e3a5f] scale-[1.02]' : ''}
+                  ${state.players.length > 1 ? 'cursor-grab active:cursor-grabbing' : ''}`}
               >
                 <div className="flex items-center gap-2">
-                  <span className="w-6 h-6 flex items-center justify-center 
-                    bg-[#1e3a5f] text-[#f5f0e8] font-bold rounded-full text-xs">
+                  {/* Drag Handle */}
+                  {state.players.length > 1 && (
+                    <div className="text-[#1e3a5f]/40 hover:text-[#1e3a5f] touch-none">
+                      <Bars2Icon className="w-4 h-4" />
+                    </div>
+                  )}
+                  <span className={`w-6 h-6 flex items-center justify-center 
+                    font-bold rounded-full text-xs ${
+                      index === 0 
+                        ? 'bg-[#1e3a5f] text-[#f5f0e8]' 
+                        : 'bg-[#c4a882] text-[#1e3a5f]'
+                    }`}>
                     {index + 1}
                   </span>
-                  <span className="font-medium text-[#1e3a5f]">{player.name}</span>
+                  <span className="font-medium text-[#1e3a5f]">
+                    {player.name}
+                    {index === 0 && <span className="text-xs ml-2 text-[#1e3a5f]/60">{t.playerSetup.goesFirst}</span>}
+                  </span>
                 </div>
-                <button
-                  onClick={() => handleRemovePlayer(player.id)}
-                  className="p-1 text-[#1e3a5f] hover:text-red-500 hover:bg-red-50 rounded transition-colors"
-                >
-                  <XMarkIcon className="w-5 h-5" />
-                </button>
+                <div className="flex items-center gap-1">
+                  {/* Mobile reorder buttons */}
+                  {state.players.length > 1 && (
+                    <div className="flex flex-col sm:hidden">
+                      <button
+                        onClick={() => handleMoveUp(index)}
+                        disabled={index === 0}
+                        className="p-0.5 text-[#1e3a5f]/60 hover:text-[#1e3a5f] disabled:opacity-30 disabled:cursor-not-allowed"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                        </svg>
+                      </button>
+                      <button
+                        onClick={() => handleMoveDown(index)}
+                        disabled={index === state.players.length - 1}
+                        className="p-0.5 text-[#1e3a5f]/60 hover:text-[#1e3a5f] disabled:opacity-30 disabled:cursor-not-allowed"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </button>
+                    </div>
+                  )}
+                  <button
+                    onClick={() => handleRemovePlayer(player.id)}
+                    className="p-1 text-[#1e3a5f] hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+                  >
+                    <XMarkIcon className="w-5 h-5" />
+                  </button>
+                </div>
               </div>
             ))}
           </div>
@@ -141,8 +256,8 @@ export function PlayerSetup() {
             text-[#f5f0e8] font-bold rounded-md transition-colors disabled:cursor-not-allowed"
         >
           {state.players.length < 1 
-            ? 'Add at least 1 player' 
-            : `Start Game`
+            ? t.playerSetup.minPlayers
+            : t.playerSetup.startGame
           }
         </button>
       </div>

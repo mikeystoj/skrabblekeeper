@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { DM_Sans } from "next/font/google";
 import { GameProvider } from "@/context/GameContext";
 import { ProProvider } from "@/context/ProContext";
+import { LanguageProvider } from "@/context/LanguageContext";
 import "./globals.css";
 
 const dmSans = DM_Sans({
@@ -74,11 +75,13 @@ export default function RootLayout({
         <meta name="theme-color" content="#1e3a5f" />
       </head>
       <body className={`${dmSans.variable} font-sans antialiased`}>
-        <ProProvider>
-          <GameProvider>
-            {children}
-          </GameProvider>
-        </ProProvider>
+        <LanguageProvider>
+          <ProProvider>
+            <GameProvider>
+        {children}
+            </GameProvider>
+          </ProProvider>
+        </LanguageProvider>
       </body>
     </html>
   );

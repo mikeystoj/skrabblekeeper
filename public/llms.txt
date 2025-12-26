@@ -33,7 +33,7 @@ Skrabble Keeper is a web-based Scrabble scoring application that helps players t
 - Data persisted in localStorage
 - No backend required for basic functionality
 
-## Pro Features (Coming Soon)
+## Pro Features
 
 - Dictionary validation with official Scrabble dictionaries
 - Game history and personal stats tracking

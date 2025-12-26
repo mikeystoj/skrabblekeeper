@@ -2,6 +2,7 @@
 
 import { useGame } from '@/context/GameContext';
 import { usePro } from '@/context/ProContext';
+import { useLanguage } from '@/context/LanguageContext';
 import { calculateAllWordsScore } from '@/lib/scoring';
 import { ViewMode } from '@/lib/types';
 import { useMemo, useState, useEffect, useCallback } from 'react';
@@ -11,6 +12,7 @@ import {
   PlayIcon,
   TrophyIcon,
   FlagIcon,
+  MagnifyingGlassIcon,
 } from '@heroicons/react/24/outline';
 
 interface GameControlsProps {
@@ -24,7 +26,9 @@ const TOTAL_TILES = 100;
 export function GameControls({ viewMode, onViewModeChange }: GameControlsProps) {
   const { state, dispatch } = useGame();
   const { isPro, saveGame, settings } = usePro();
+  const { t } = useLanguage();
   const [showEndGameModal, setShowEndGameModal] = useState(false);
+  const [showWordChecker, setShowWordChecker] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [gameStartTime] = useState(() => Date.now());
   
@@ -239,6 +243,7 @@ export function GameControls({ viewMode, onViewModeChange }: GameControlsProps) 
     if (index === 0) return <TrophyIcon className="w-4 h-4 text-yellow-500" />;
     if (index === 1) return <span className="text-sm text-gray-400">2nd</span>;
     if (index === 2) return <span className="text-sm text-amber-600">3rd</span>;
+    if (index === 3) return <span className="text-sm text-gray-400">4th</span>;
     return <span className="text-sm text-[#1e3a5f]/50">{index + 1}.</span>;
   };
 
@@ -259,8 +264,8 @@ export function GameControls({ viewMode, onViewModeChange }: GameControlsProps) 
           onClick={e => e.stopPropagation()}
         >
           <div className="bg-[#1e3a5f] px-5 py-4">
-            <h2 className="text-lg font-bold text-[#f5f0e8]">End Game</h2>
-            <p className="text-[#f5f0e8]/70 text-sm">Game Summary</p>
+            <h2 className="text-lg font-bold text-[#f5f0e8]">{t.gameControls.endGame}</h2>
+            <p className="text-[#f5f0e8]/70 text-sm">{t.endGameModal.title}</p>
           </div>
 
           <div className="p-5">
@@ -307,7 +312,7 @@ export function GameControls({ viewMode, onViewModeChange }: GameControlsProps) 
                 text-[#f5f0e8] font-bold rounded-lg transition-colors
                 disabled:opacity-50"
             >
-              {isSaving ? 'Saving...' : isPro ? 'End & Save to History' : 'End Game'}
+              {isSaving ? t.endGameModal.saving : isPro ? t.endGameModal.saveToHistory : t.gameControls.endGame}
             </button>
             {isPro && (
               <button
@@ -315,7 +320,7 @@ export function GameControls({ viewMode, onViewModeChange }: GameControlsProps) 
                 className="w-full py-2 px-4 text-[#1e3a5f]/50 hover:text-[#1e3a5f] 
                   text-sm transition-colors"
               >
-                End without saving
+                {t.endGameModal.dontSave}
               </button>
             )}
             <button
@@ -323,7 +328,142 @@ export function GameControls({ viewMode, onViewModeChange }: GameControlsProps) 
               className="w-full py-2 px-4 text-[#1e3a5f]/50 hover:text-[#1e3a5f] 
                 text-sm transition-colors"
             >
-              Continue Playing
+              {t.common.cancel}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Word Checker Modal (standalone, independent of board)
+  const WordCheckerModal = () => {
+    const [checkWord, setCheckWord] = useState('');
+    const [checkStatus, setCheckStatus] = useState<'idle' | 'checking' | 'valid' | 'invalid'>('idle');
+    const [checkError, setCheckError] = useState<string | null>(null);
+
+    if (!showWordChecker) return null;
+
+    const handleCheck = async () => {
+      if (checkWord.length < 2) return;
+      
+      setCheckStatus('checking');
+      setCheckError(null);
+      
+      try {
+        const response = await fetch(`/api/check-word?word=${encodeURIComponent(checkWord.toUpperCase())}`);
+        const data = await response.json();
+        
+        if (response.ok) {
+          setCheckStatus(data.isValid ? 'valid' : 'invalid');
+        } else {
+          setCheckError(data.error || 'Check failed');
+          setCheckStatus('idle');
+        }
+      } catch (error) {
+        console.error('Word check error:', error);
+        setCheckError('Network error');
+        setCheckStatus('idle');
+      }
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+      if (e.key === 'Enter' && checkWord.length >= 2) {
+        handleCheck();
+      }
+    };
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const value = e.target.value.toUpperCase().replace(/[^A-Z]/g, '');
+      setCheckWord(value);
+      setCheckStatus('idle');
+    };
+
+    const handleClose = () => {
+      setShowWordChecker(false);
+      setCheckWord('');
+      setCheckStatus('idle');
+      setCheckError(null);
+    };
+
+    return (
+      <div 
+        className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4"
+        onClick={handleClose}
+      >
+        <div 
+          className="bg-[#faf8f5] rounded-xl shadow-xl max-w-sm w-full overflow-hidden"
+          onClick={e => e.stopPropagation()}
+        >
+          <div className="bg-[#1e3a5f] px-5 py-4">
+            <h2 className="text-lg font-bold text-[#f5f0e8] flex items-center gap-2">
+              <MagnifyingGlassIcon className="w-5 h-5" />
+              Word Checker
+            </h2>
+            <p className="text-[#f5f0e8]/70 text-sm">Check if a word is valid</p>
+          </div>
+
+          <div className="p-5">
+            <div className="flex gap-2 mb-3">
+              <input
+                type="text"
+                value={checkWord}
+                onChange={handleInputChange}
+                onKeyDown={handleKeyDown}
+                placeholder="Type a word..."
+                autoFocus
+                className={`flex-1 px-4 py-3 text-xl font-bold tracking-widest text-center
+                  border-2 rounded-lg focus:outline-none
+                  text-[#1e3a5f] bg-white uppercase
+                  ${checkStatus === 'valid' ? 'border-green-500 bg-green-50' : 
+                    checkStatus === 'invalid' ? 'border-red-400 bg-red-50' : 
+                    'border-[#d4c4a8] focus:border-[#1e3a5f]'}`}
+                maxLength={15}
+              />
+            </div>
+
+            {/* Result Display */}
+            {checkStatus === 'valid' && (
+              <div className="p-4 bg-green-100 border border-green-300 rounded-lg text-center mb-3">
+                <p className="text-green-700 font-bold text-lg">✓ Valid Word!</p>
+                <p className="text-green-600 text-sm">&quot;{checkWord}&quot; is in the dictionary</p>
+              </div>
+            )}
+            
+            {checkStatus === 'invalid' && (
+              <div className="p-4 bg-red-100 border border-red-300 rounded-lg text-center mb-3">
+                <p className="text-red-700 font-bold text-lg">✗ Not Found</p>
+                <p className="text-red-600 text-sm">&quot;{checkWord}&quot; is not in the dictionary</p>
+              </div>
+            )}
+
+            {checkError && (
+              <div className="p-3 bg-amber-100 border border-amber-300 rounded-lg text-center mb-3">
+                <p className="text-amber-700 text-sm">{checkError}</p>
+              </div>
+            )}
+
+            <p className="text-xs text-[#1e3a5f]/50 text-center mb-4">
+              This checker is independent of the board - use it to look up any word.
+            </p>
+          </div>
+
+          <div className="px-5 pb-5 space-y-2">
+            <button
+              onClick={handleCheck}
+              disabled={checkWord.length < 2 || checkStatus === 'checking'}
+              className="w-full py-2.5 px-4 bg-[#1e3a5f] hover:bg-[#162d4d] 
+                text-[#f5f0e8] font-bold rounded-lg transition-colors
+                disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {checkStatus === 'checking' ? 'Checking...' : 'Check Word'}
+            </button>
+            <button
+              onClick={handleClose}
+              className="w-full py-2 px-4 text-[#1e3a5f]/50 hover:text-[#1e3a5f] 
+                text-sm transition-colors"
+            >
+              Close
             </button>
           </div>
         </div>
@@ -334,6 +474,7 @@ export function GameControls({ viewMode, onViewModeChange }: GameControlsProps) 
   return (
     <>
     <EndGameModal />
+    <WordCheckerModal />
     <div className="bg-[#faf8f5] rounded-lg shadow-md p-3 space-y-3">
       {/* View Toggle */}
       <div className="flex rounded-md bg-[#e8dfd2] p-1">
@@ -345,7 +486,7 @@ export function GameControls({ viewMode, onViewModeChange }: GameControlsProps) 
               : 'text-[#1e3a5f] hover:bg-[#d4c4a8]'
             }`}
         >
-          Board
+          {t.board.placeWord.split(' ')[0]}
         </button>
         <button
           onClick={() => onViewModeChange('scores')}
@@ -355,7 +496,7 @@ export function GameControls({ viewMode, onViewModeChange }: GameControlsProps) 
               : 'text-[#1e3a5f] hover:bg-[#d4c4a8]'
             }`}
         >
-          Scores
+          {t.scoreView.words}
         </button>
       </div>
 
@@ -363,8 +504,8 @@ export function GameControls({ viewMode, onViewModeChange }: GameControlsProps) 
       {currentPlayer && viewMode === 'board' && (
         <div className="p-2 bg-[#e8dfd2] rounded-md">
           <div className="flex items-center justify-between text-sm">
-            <span className="text-[#1e3a5f]">Turn: <strong>{currentPlayer.name}</strong></span>
-            <span className="text-[#1e3a5f]">Score: <strong>{currentPlayer.score}</strong></span>
+            <span className="text-[#1e3a5f]">{t.gameControls.turn}: <strong>{currentPlayer.name}</strong></span>
+            <span className="text-[#1e3a5f]">{t.gameControls.score}: <strong>{currentPlayer.score}</strong></span>
           </div>
           
           {/* Timer Display */}
@@ -397,7 +538,7 @@ export function GameControls({ viewMode, onViewModeChange }: GameControlsProps) 
               
               {/* Paused indicator */}
               {!isTimerRunning && !timerExpired && (
-                <p className="text-xs text-amber-600 text-center mt-1 animate-pulse">Timer paused</p>
+                <p className="text-xs text-amber-600 text-center mt-1 animate-pulse">{t.gameControls.timerPaused}</p>
               )}
               
               {/* Timer Expired Warning */}
@@ -411,7 +552,7 @@ export function GameControls({ viewMode, onViewModeChange }: GameControlsProps) 
                     onClick={handleTimerExpired}
                     className="mt-1 text-xs bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
                   >
-                    Pass Turn
+                    {t.gameControls.passTurn}
                   </button>
                 </div>
               )}
@@ -444,7 +585,7 @@ export function GameControls({ viewMode, onViewModeChange }: GameControlsProps) 
 
       {/* Action Buttons */}
       {viewMode === 'board' && (
-        <div className="flex gap-2">
+        <div className="flex gap-2 hidden">
           <button
             onClick={handleClearPending}
             disabled={state.pendingTiles.length === 0}
@@ -452,7 +593,7 @@ export function GameControls({ viewMode, onViewModeChange }: GameControlsProps) 
               disabled:opacity-40 disabled:cursor-not-allowed
               text-[#1e3a5f] font-medium rounded-md transition-colors text-sm"
           >
-            Clear
+            {t.common.clear}
           </button>
           <button
             onClick={handleSubmitWord}
@@ -461,7 +602,7 @@ export function GameControls({ viewMode, onViewModeChange }: GameControlsProps) 
               disabled:opacity-40 disabled:cursor-not-allowed
               text-[#f5f0e8] font-medium rounded-md transition-colors text-sm"
           >
-            Submit
+            {t.common.submit}
           </button>
         </div>
       )}
@@ -475,11 +616,11 @@ export function GameControls({ viewMode, onViewModeChange }: GameControlsProps) 
             className="flex-1 py-2 px-3 bg-[#e8dfd2] hover:bg-[#d4c4a8] 
               disabled:opacity-40 disabled:cursor-not-allowed
               text-[#1e3a5f] font-medium rounded-md transition-colors text-sm
-              flex items-center justify-center gap-1"
+              flex items-center justify-center flex-col gap-1 w-1/2"
           >
-            <span>Undo</span>
+            <span>{t.gameControls.undoLast}</span>
             {lastWordInfo && (
-              <span className="text-xs opacity-70 truncate max-w-[60px]">({lastWordInfo.word})</span>
+              <span className="text-xs opacity-70">({lastWordInfo.word})</span>
             )}
           </button>
           <button
@@ -487,9 +628,9 @@ export function GameControls({ viewMode, onViewModeChange }: GameControlsProps) 
             disabled={state.players.length < 2}
             className="flex-1 py-2 px-3 bg-[#c4a882] hover:bg-[#b39872] 
               disabled:opacity-40 disabled:cursor-not-allowed
-              text-[#1e3a5f] font-medium rounded-md transition-colors text-sm"
+              text-[#1e3a5f] font-medium rounded-md transition-colors text-sm w-1/2"
           >
-            Pass Turn
+            {t.gameControls.passTurn}
           </button>
         </div>
       )}
@@ -532,6 +673,19 @@ export function GameControls({ viewMode, onViewModeChange }: GameControlsProps) 
         </div>
       )}
 
+      {/* Word Checker Button (Pro feature) */}
+      {isPro && settings.wordChecker && (
+        <button
+          onClick={() => setShowWordChecker(true)}
+          className="w-full py-2 px-3 bg-[#e8dfd2] hover:bg-[#d4c4a8] 
+            text-[#1e3a5f] font-medium rounded-md transition-colors text-sm
+            flex items-center justify-center gap-2"
+        >
+          <MagnifyingGlassIcon className="w-4 h-4" />
+          Word Checker
+        </button>
+      )}
+
       {/* End Game Button */}
       {state.players.length > 0 && state.players.some(p => p.words.length > 0) && (
         <button
@@ -541,7 +695,7 @@ export function GameControls({ viewMode, onViewModeChange }: GameControlsProps) 
             flex items-center justify-center gap-2"
         >
           <FlagIcon className="w-4 h-4" />
-          End Game
+          {t.gameControls.endGame}
         </button>
       )}
     </div>

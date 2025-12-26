@@ -9,6 +9,12 @@ export interface PlacedTile {
   isPending?: boolean; // True when tile is being placed but not yet submitted
 }
 
+// Individual word score breakdown
+export interface WordScore {
+  word: string;
+  score: number;
+}
+
 // A word that has been played
 export interface PlayedWord {
   id: string;
@@ -16,6 +22,7 @@ export interface PlayedWord {
   score: number;
   tiles: PlacedTile[];
   timestamp: number;
+  breakdown?: WordScore[]; // Individual word scores if multiple words formed
 }
 
 // A player in the game
@@ -44,12 +51,13 @@ export type GameAction =
   | { type: 'REMOVE_PLAYER'; playerId: string }
   | { type: 'UPDATE_PLAYER_NAME'; playerId: string; name: string }
   | { type: 'UPDATE_PLAYER_SCORE'; playerId: string; score: number }
+  | { type: 'REORDER_PLAYERS'; fromIndex: number; toIndex: number }
   | { type: 'SET_CURRENT_PLAYER'; playerId: string }
   | { type: 'PLACE_TILE'; row: number; col: number; letter: string }
   | { type: 'PLACE_WORD'; startRow: number; startCol: number; word: string; direction: Direction }
   | { type: 'REMOVE_PENDING_TILE'; row: number; col: number }
   | { type: 'CLEAR_PENDING_TILES' }
-  | { type: 'SUBMIT_WORD'; word: string; score: number }
+  | { type: 'SUBMIT_WORD'; word: string; score: number; breakdown?: WordScore[] }
   | { type: 'UNDO_LAST_WORD' }
   | { type: 'START_GAME' }
   | { type: 'NEW_GAME' }

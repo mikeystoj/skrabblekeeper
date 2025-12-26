@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { usePro } from '@/context/ProContext';
+import { useLanguage } from '@/context/LanguageContext';
 import {
   CheckIcon,
   ArrowLeftIcon,
@@ -17,6 +18,7 @@ type View = 'main' | 'activate' | 'purchase';
 
 export function ProModal({ isOpen, onClose }: ProModalProps) {
   const { isPro, licenseEmail, activatePro, deactivatePro } = usePro();
+  const { t } = useLanguage();
   const [view, setView] = useState<View>('main');
   const [email, setEmail] = useState('');
   const [licenseKey, setLicenseKey] = useState('');
@@ -26,12 +28,11 @@ export function ProModal({ isOpen, onClose }: ProModalProps) {
   if (!isOpen) return null;
 
   const features: { text: string; comingSoon?: boolean }[] = [
-    { text: 'Dictionary validation with official Scrabble dictionaries', comingSoon: true },
-    { text: 'Game history and personal stats tracking' },
-    { text: 'Predictive word helper suggestions', comingSoon: true },
-    { text: 'Saved player names for quick selection' },
-    { text: 'Multi-lingual support (EN, ES, FR, DE)' },
-    { text: 'Turn timer for competitive play' },
+    { text: t.proModal.features.dictionary },
+    { text: t.proModal.features.gameHistory },
+    { text: t.proSettings.savedPlayers },
+    { text: t.proModal.features.multiLingual },
+    { text: t.proModal.features.turnTimer },
     { text: 'No future ads' },
   ];
 
@@ -122,10 +123,10 @@ export function ProModal({ isOpen, onClose }: ProModalProps) {
           <div className="bg-[#1e3a5f] px-5 py-4 sticky top-0 z-10">
             <div className="flex items-center gap-2">
               <SparklesIcon className="w-5 h-5 text-[#c4a882]" />
-              <h2 className="text-lg font-bold text-[#f5f0e8]">Keeper Pro Active</h2>
+              <h2 className="text-lg font-bold text-[#f5f0e8]">{t.proModal.proActive}</h2>
             </div>
             <p className="text-sm text-[#f5f0e8]/60 mt-1">
-              Licensed to: {licenseEmail}
+              {licenseEmail}
             </p>
           </div>
 
@@ -133,7 +134,7 @@ export function ProModal({ isOpen, onClose }: ProModalProps) {
             {/* Features included */}
             <div className="mb-4">
               <p className="text-xs font-medium text-[#1e3a5f]/50 uppercase tracking-wide mb-3">
-                Your Pro Features
+                {t.proModal.featuresIncluded}
               </p>
               <ul className="space-y-2">
                 {features.map((feature, index) => (
@@ -143,7 +144,7 @@ export function ProModal({ isOpen, onClose }: ProModalProps) {
                       {feature.text}
                       {feature.comingSoon && (
                         <span className="text-[10px] px-1.5 py-0.5 bg-[#c4a882]/30 text-[#1e3a5f]/70 rounded-full font-medium">
-                          Soon
+                          {t.common.comingSoon}
                         </span>
                       )}
                     </span>
@@ -154,7 +155,7 @@ export function ProModal({ isOpen, onClose }: ProModalProps) {
 
             <div className="bg-[#f5f0e8] rounded-lg p-3 mb-4">
               <p className="text-xs text-[#1e3a5f]/70 text-center">
-                Access Pro Settings from the header menu to customize your experience.
+                {t.proModal.proActiveDesc}
               </p>
             </div>
 
@@ -173,7 +174,7 @@ export function ProModal({ isOpen, onClose }: ProModalProps) {
               className="w-full py-2.5 px-4 bg-[#1e3a5f] hover:bg-[#162d4d] 
                 text-[#f5f0e8] font-medium rounded-lg transition-colors"
             >
-              Close
+              {t.common.close}
             </button>
           </div>
         </div>
@@ -193,8 +194,8 @@ export function ProModal({ isOpen, onClose }: ProModalProps) {
           onClick={e => e.stopPropagation()}
         >
           <div className="bg-[#1e3a5f] px-5 py-4">
-            <h2 className="text-lg font-bold text-[#f5f0e8]">Get Keeper Pro</h2>
-            <p className="text-[#f5f0e8]/70 text-sm">$10 one-time payment</p>
+            <h2 className="text-lg font-bold text-[#f5f0e8]">{t.proModal.title}</h2>
+            <p className="text-[#f5f0e8]/70 text-sm">$10 {t.proModal.oneTimeFee.toLowerCase()}</p>
           </div>
 
           <div className="p-5">
@@ -223,7 +224,7 @@ export function ProModal({ isOpen, onClose }: ProModalProps) {
                 text-[#f5f0e8] font-bold rounded-lg transition-colors
                 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isLoading ? 'Processing...' : 'Continue to Payment'}
+              {isLoading ? t.common.loading : t.proModal.buyNow}
             </button>
 
             <p className="text-xs text-center text-[#1e3a5f]/40 mt-3">
@@ -238,7 +239,7 @@ export function ProModal({ isOpen, onClose }: ProModalProps) {
                 text-sm transition-colors flex items-center justify-center gap-1"
             >
               <ArrowLeftIcon className="w-4 h-4" />
-              Back
+              {t.common.back}
             </button>
           </div>
         </div>
@@ -258,18 +259,18 @@ export function ProModal({ isOpen, onClose }: ProModalProps) {
           onClick={e => e.stopPropagation()}
         >
           <div className="bg-[#1e3a5f] px-5 py-4">
-            <h2 className="text-lg font-bold text-[#f5f0e8]">Activate Pro</h2>
-            <p className="text-[#f5f0e8]/70 text-sm">Enter your license key</p>
+            <h2 className="text-lg font-bold text-[#f5f0e8]">{t.proModal.activate}</h2>
+            <p className="text-[#f5f0e8]/70 text-sm">{t.proModal.enterLicenseKey}</p>
           </div>
 
           <div className="p-5">
             <p className="text-sm text-[#1e3a5f]/70 mb-4">
-              Enter the license key from your purchase email.
+              {t.proModal.enterLicenseKey}
             </p>
 
             <input
               type="text"
-              placeholder="SK-XXXX-XXXX-XXXX"
+              placeholder={t.proModal.licenseKeyPlaceholder}
               value={licenseKey}
               onChange={(e) => setLicenseKey(e.target.value.toUpperCase())}
               className="w-full px-4 py-3 rounded-lg border-2 border-[#e8dfd2] 
@@ -290,7 +291,7 @@ export function ProModal({ isOpen, onClose }: ProModalProps) {
                 text-[#f5f0e8] font-bold rounded-lg transition-colors
                 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isLoading ? 'Validating...' : 'Activate License'}
+              {isLoading ? t.proModal.activating : t.proModal.activate}
             </button>
           </div>
 
@@ -301,7 +302,7 @@ export function ProModal({ isOpen, onClose }: ProModalProps) {
                 text-sm transition-colors flex items-center justify-center gap-1"
             >
               <ArrowLeftIcon className="w-4 h-4" />
-              Back
+              {t.common.back}
             </button>
           </div>
         </div>
@@ -321,15 +322,15 @@ export function ProModal({ isOpen, onClose }: ProModalProps) {
       >
         {/* Header */}
         <div className="bg-[#1e3a5f] px-5 py-4">
-          <h2 className="text-lg font-bold text-[#f5f0e8]">Keeper Pro</h2>
-          <p className="text-[#f5f0e8]/70 text-sm">Unlock the full experience</p>
+          <h2 className="text-lg font-bold text-[#f5f0e8]">{t.proModal.title}</h2>
+          <p className="text-[#f5f0e8]/70 text-sm">{t.proModal.subtitle}</p>
         </div>
 
         {/* Price */}
         <div className="px-5 py-4 border-b border-[#e8dfd2]">
           <div className="flex items-baseline gap-1">
             <span className="text-3xl font-bold text-[#1e3a5f]">$10</span>
-            <span className="text-[#1e3a5f]/50 text-sm">one-time</span>
+            <span className="text-[#1e3a5f]/50 text-sm">{t.proModal.oneTimeFee.toLowerCase()}</span>
           </div>
         </div>
 
@@ -343,7 +344,7 @@ export function ProModal({ isOpen, onClose }: ProModalProps) {
                   {feature.text}
                   {feature.comingSoon && (
                     <span className="text-[10px] px-1.5 py-0.5 bg-[#c4a882]/30 text-[#1e3a5f]/70 rounded-full font-medium">
-                      Soon
+                      {t.common.comingSoon}
                     </span>
                   )}
                 </span>
@@ -359,21 +360,21 @@ export function ProModal({ isOpen, onClose }: ProModalProps) {
             className="w-full py-2.5 px-4 bg-[#1e3a5f] hover:bg-[#162d4d]
               text-[#f5f0e8] font-bold rounded-lg transition-colors"
           >
-            Get Pro - $10
+            {t.proModal.buyNow} - $10
           </button>
           <button
             onClick={() => setView('activate')}
             className="w-full py-2 px-4 bg-[#e8dfd2] hover:bg-[#d4c4a8]
               text-[#1e3a5f] font-medium rounded-lg transition-colors text-sm"
           >
-            I have a license key
+            {t.proModal.activateLicense}
           </button>
           <button
             onClick={resetAndClose}
             className="w-full py-2 px-4 text-[#1e3a5f]/50 hover:text-[#1e3a5f] 
               text-sm transition-colors"
           >
-            Close
+            {t.common.close}
           </button>
         </div>
       </div>

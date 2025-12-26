@@ -1,5 +1,7 @@
 'use client';
 
+import { useLanguage } from '@/context/LanguageContext';
+
 interface NewGameModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -13,6 +15,8 @@ export function NewGameModal({
   onRestartSamePlayers, 
   onNewGameNewPlayers 
 }: NewGameModalProps) {
+  const { t } = useLanguage();
+  
   if (!isOpen) return null;
 
   return (
@@ -25,7 +29,7 @@ export function NewGameModal({
         onClick={e => e.stopPropagation()}
       >
         <div className="bg-[#1e3a5f] px-5 py-4">
-          <h2 className="text-lg font-bold text-[#f5f0e8]">New Game</h2>
+          <h2 className="text-lg font-bold text-[#f5f0e8]">{t.newGameModal.title}</h2>
         </div>
 
         <div className="p-4 space-y-2">
@@ -34,8 +38,8 @@ export function NewGameModal({
             className="w-full py-3 px-4 bg-[#e8dfd2] hover:bg-[#d4c4a8] 
               text-[#1e3a5f] font-medium rounded-lg transition-colors text-left"
           >
-            <div className="font-semibold">Restart with Same Players</div>
-            <div className="text-sm opacity-70">Reset scores & board</div>
+            <div className="font-semibold">{t.newGameModal.restartSamePlayers}</div>
+            <div className="text-sm opacity-70">{t.newGameModal.keepScoresReset}</div>
           </button>
 
           <button
@@ -43,8 +47,8 @@ export function NewGameModal({
             className="w-full py-3 px-4 bg-[#e8dfd2] hover:bg-[#d4c4a8] 
               text-[#1e3a5f] font-medium rounded-lg transition-colors text-left"
           >
-            <div className="font-semibold">New Game with New Players</div>
-            <div className="text-sm opacity-70">Start completely fresh</div>
+            <div className="font-semibold">{t.newGameModal.newPlayers}</div>
+            <div className="text-sm opacity-70">{t.newGameModal.startFresh}</div>
           </button>
         </div>
 
@@ -54,7 +58,7 @@ export function NewGameModal({
             className="w-full py-2 px-4 bg-[#1e3a5f] hover:bg-[#162d4d] 
               text-[#f5f0e8] font-medium rounded-lg transition-colors"
           >
-            Cancel
+            {t.common.cancel}
           </button>
         </div>
       </div>

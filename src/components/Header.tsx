@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { useState, useEffect, useRef } from 'react';
 import { useGame } from '@/context/GameContext';
 import { usePro } from '@/context/ProContext';
+import { useLanguage } from '@/context/LanguageContext';
 import { NewGameModal } from './NewGameModal';
 import { ProModal } from './ProModal';
 import { InfoModal } from './InfoModal';
@@ -20,10 +21,55 @@ import {
   DevicePhoneMobileIcon,
   ArrowPathIcon,
   StarIcon,
+  LanguageIcon,
 } from '@heroicons/react/24/outline';
+import { Language } from '@/lib/i18n';
+
+// Mobile Language Selector (inline in menu)
+function MobileLanguageSelector({ onClose }: { onClose: () => void }) {
+  const { language, setLanguage, supportedLanguages } = useLanguage();
+  const [isExpanded, setIsExpanded] = useState(false);
+  
+  const currentLang = supportedLanguages.find(l => l.code === language);
+
+  if (!isExpanded) {
+    return (
+      <button
+        onClick={() => setIsExpanded(true)}
+        className="w-full px-4 py-3 text-left text-sm text-[#1e3a5f] hover:bg-[#e8dfd2] 
+          flex items-center gap-3 border-b border-[#e8dfd2]"
+      >
+        <LanguageIcon className="w-5 h-5 opacity-60" />
+        <span className="flex-1">{currentLang?.nativeName}</span>
+        <span className="text-base">{currentLang?.flag}</span>
+      </button>
+    );
+  }
+
+  return (
+    <div className="border-b border-[#e8dfd2] bg-[#e8dfd2]/30">
+      {supportedLanguages.map((lang) => (
+        <button
+          key={lang.code}
+          onClick={() => { 
+            setLanguage(lang.code as Language); 
+            setIsExpanded(false);
+          }}
+          className={`w-full px-4 py-2.5 text-left text-sm hover:bg-[#e8dfd2] 
+            flex items-center gap-3
+            ${language === lang.code ? 'bg-[#e8dfd2] font-medium text-[#1e3a5f]' : 'text-[#1e3a5f]/80'}`}
+        >
+          <span className="text-base">{lang.flag}</span>
+          {lang.nativeName}
+        </button>
+      ))}
+    </div>
+  );
+}
 
 // Install prompt modal for PWA
 function InstallPrompt({ onClose }: { onClose: () => void }) {
+  const { t } = useLanguage();
   const [isIOS, setIsIOS] = useState(false);
   const [isAndroid, setIsAndroid] = useState(false);
 
@@ -43,38 +89,38 @@ function InstallPrompt({ onClose }: { onClose: () => void }) {
         onClick={e => e.stopPropagation()}
       >
         <div className="bg-[#1e3a5f] px-5 py-4">
-          <h2 className="text-lg font-bold text-[#f5f0e8]">Add to Home Screen</h2>
+          <h2 className="text-lg font-bold text-[#f5f0e8]">{t.installPrompt.title}</h2>
         </div>
 
         <div className="px-5 py-4 space-y-3">
           <p className="text-sm text-[#1e3a5f]">
-            Install Skrabble Keeper as an app for quick access!
+            {t.installPrompt.description}
           </p>
 
           {isIOS ? (
             <div className="text-sm text-[#1e3a5f] space-y-2">
-              <p className="font-medium">On Safari:</p>
+              <p className="font-medium">{t.installPrompt.iosSafari}</p>
               <ol className="list-decimal ml-5 space-y-1">
-                <li>Tap the <strong>Share</strong> button</li>
-                <li>Scroll down and tap <strong>Add to Home Screen</strong></li>
-                <li>Tap <strong>Add</strong></li>
+                {t.installPrompt.iosSteps.map((step, i) => (
+                  <li key={i}>{step}</li>
+                ))}
               </ol>
             </div>
           ) : isAndroid ? (
             <div className="text-sm text-[#1e3a5f] space-y-2">
-              <p className="font-medium">On Chrome:</p>
+              <p className="font-medium">{t.installPrompt.androidChrome}</p>
               <ol className="list-decimal ml-5 space-y-1">
-                <li>Tap the <strong>menu</strong> button</li>
-                <li>Tap <strong>Add to Home screen</strong></li>
-                <li>Tap <strong>Add</strong></li>
+                {t.installPrompt.androidSteps.map((step, i) => (
+                  <li key={i}>{step}</li>
+                ))}
               </ol>
             </div>
           ) : (
             <div className="text-sm text-[#1e3a5f] space-y-2">
-              <p className="font-medium">On your browser:</p>
               <ol className="list-decimal ml-5 space-y-1">
-                <li>Look for the install icon in the address bar</li>
-                <li>Or use your browser&apos;s menu to &quot;Install app&quot;</li>
+                {t.installPrompt.browserSteps.map((step, i) => (
+                  <li key={i}>{step}</li>
+                ))}
               </ol>
             </div>
           )}
@@ -86,10 +132,60 @@ function InstallPrompt({ onClose }: { onClose: () => void }) {
             className="w-full py-2.5 px-4 bg-[#1e3a5f] hover:bg-[#162d4d] 
               text-[#f5f0e8] font-medium rounded-lg transition-colors"
           >
-            Got it
+            {t.common.gotIt}
           </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+// Language Dropdown
+function LanguageDropdown() {
+  const { language, setLanguage, supportedLanguages, t } = useLanguage();
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const currentLang = supportedLanguages.find(l => l.code === language);
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="p-2 text-[#1e3a5f]/60 hover:text-[#1e3a5f] 
+          hover:bg-[#e8dfd2] rounded-lg transition-all flex items-center gap-1"
+        title="Language"
+      >
+        <span className="text-base">{currentLang?.flag}</span>
+        <ChevronDownIcon className={`w-3 h-3 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+      </button>
+
+      {isOpen && (
+        <div className="absolute right-0 mt-2 w-40 bg-[#faf8f5] rounded-lg shadow-lg border border-[#e8dfd2] overflow-hidden z-50">
+          {supportedLanguages.map((lang) => (
+            <button
+              key={lang.code}
+              onClick={() => { setLanguage(lang.code as Language); setIsOpen(false); }}
+              className={`w-full px-4 py-2.5 text-left text-sm hover:bg-[#e8dfd2] 
+                flex items-center gap-3 border-b border-[#e8dfd2] last:border-0
+                ${language === lang.code ? 'bg-[#e8dfd2] font-medium text-[#1e3a5f]' : 'text-[#1e3a5f]/80'}`}
+            >
+              <span className="text-base">{lang.flag}</span>
+              {lang.nativeName}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -104,6 +200,7 @@ function ProDropdown({
   onHistory: () => void;
   onManageLicense: () => void;
 }) {
+  const { t } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -139,7 +236,7 @@ function ProDropdown({
               flex items-center gap-3 border-b border-[#e8dfd2]"
           >
             <ChartBarIcon className="w-5 h-5" />
-            Game History
+            {t.header.gameHistory}
           </button>
           <button
             onClick={() => { onSettings(); setIsOpen(false); }}
@@ -147,7 +244,7 @@ function ProDropdown({
               flex items-center gap-3 border-b border-[#e8dfd2]"
           >
             <Cog6ToothIcon className="w-5 h-5" />
-            Settings
+            {t.proSettings.title}
           </button>
           <button
             onClick={() => { onManageLicense(); setIsOpen(false); }}
@@ -155,7 +252,7 @@ function ProDropdown({
               flex items-center gap-3"
           >
             <KeyIcon className="w-5 h-5" />
-            Manage License
+            {t.header.manageLicense}
           </button>
         </div>
       )}
@@ -166,6 +263,7 @@ function ProDropdown({
 export function Header() {
   const { state, dispatch } = useGame();
   const { isPro } = usePro();
+  const { t } = useLanguage();
   const [showNewGameModal, setShowNewGameModal] = useState(false);
   const [showProModal, setShowProModal] = useState(false);
   const [showInfoModal, setShowInfoModal] = useState(false);
@@ -213,10 +311,12 @@ export function Header() {
               onClick={() => setShowInfoModal(true)}
               className="p-2 text-[#1e3a5f]/60 hover:text-[#1e3a5f] 
                 hover:bg-[#e8dfd2] rounded-lg transition-all"
-              title="About this app"
+              title={t.header.about}
             >
               <InformationCircleIcon className="w-5 h-5" />
             </button>
+
+            <LanguageDropdown />
 
             {isPro ? (
               <ProDropdown 
@@ -232,7 +332,7 @@ export function Header() {
                   rounded-lg transition-all text-sm hover:shadow-lg 
                   transform hover:-translate-y-0.5"
               >
-                Keeper Pro
+                {t.header.keeperPro}
               </button>
             )}
 
@@ -242,7 +342,7 @@ export function Header() {
                 className="py-2 px-4 bg-[#1e3a5f] hover:bg-[#162d4d] 
                   text-[#f5f0e8] font-medium rounded-lg transition-colors text-sm"
               >
-                New Game
+                {t.header.newGame}
               </button>
             )}
           </div>
@@ -268,8 +368,11 @@ export function Header() {
                 flex items-center gap-3 border-b border-[#e8dfd2]"
             >
               <InformationCircleIcon className="w-5 h-5 opacity-60" />
-              About
+              {t.header.about}
             </button>
+
+            {/* Mobile Language Selector */}
+            <MobileLanguageSelector onClose={() => setShowMobileMenu(false)} />
 
             {isPro ? (
               <>
@@ -282,7 +385,7 @@ export function Header() {
                     flex items-center gap-3 border-b border-[#e8dfd2]"
                 >
                   <ChartBarIcon className="w-5 h-5" />
-                  Game History
+                  {t.header.gameHistory}
                 </button>
                 <button
                   onClick={() => {
@@ -293,7 +396,7 @@ export function Header() {
                     flex items-center gap-3 border-b border-[#e8dfd2]"
                 >
                   <Cog6ToothIcon className="w-5 h-5" />
-                  Pro Settings
+                  {t.header.proSettings}
                 </button>
                 <button
                   onClick={() => {
@@ -304,7 +407,7 @@ export function Header() {
                     flex items-center gap-3 border-b border-[#e8dfd2]"
                 >
                   <KeyIcon className="w-5 h-5" />
-                  Manage License
+                  {t.header.manageLicense}
                 </button>
               </>
             ) : (
@@ -317,7 +420,7 @@ export function Header() {
                   flex items-center gap-3 border-b border-[#e8dfd2]"
               >
                 <StarIcon className="w-5 h-5 text-[#c4a882]" />
-                Keeper Pro
+                {t.header.keeperPro}
               </button>
             )}
 
@@ -331,7 +434,7 @@ export function Header() {
                   flex items-center gap-3 border-b border-[#e8dfd2]"
               >
                 <DevicePhoneMobileIcon className="w-5 h-5" />
-                Add as App
+                {t.header.addAsApp}
               </button>
             )}
 
@@ -345,7 +448,7 @@ export function Header() {
                   hover:bg-[#e8dfd2] flex items-center gap-3"
               >
                 <ArrowPathIcon className="w-5 h-5" />
-                New Game
+                {t.header.newGame}
               </button>
             )}
           </div>
