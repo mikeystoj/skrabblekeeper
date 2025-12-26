@@ -85,6 +85,8 @@ export interface Translations {
     score: string;
     proPromo: string;
     proPromoSubtitle: string;
+    boardTab: string;
+    scoresTab: string;
   };
 
   // Board & Letter Picker

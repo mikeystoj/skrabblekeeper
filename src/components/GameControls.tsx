@@ -490,7 +490,7 @@ export function GameControls({ viewMode, onViewModeChange }: GameControlsProps) 
               : 'text-[#1e3a5f] hover:bg-[#d4c4a8]'
             }`}
         >
-          {t.board.placeWord.split(' ')[0]}
+          {t.gameControls.boardTab}
         </button>
         <button
           onClick={() => onViewModeChange('scores')}
@@ -500,7 +500,7 @@ export function GameControls({ viewMode, onViewModeChange }: GameControlsProps) 
               : 'text-[#1e3a5f] hover:bg-[#d4c4a8]'
             }`}
         >
-          {t.scoreView.words}
+          {t.gameControls.scoresTab}
         </button>
       </div>
 

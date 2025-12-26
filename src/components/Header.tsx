@@ -162,7 +162,7 @@ function LanguageDropdown() {
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="p-2 text-[#1e3a5f]/60 hover:text-[#1e3a5f] 
+        className="p-2 py-1.5 text-[#1e3a5f]/60 hover:text-[#1e3a5f] 
           hover:bg-[#e8dfd2] rounded-lg transition-all flex items-center gap-1"
         title="Language"
       >

@@ -64,6 +64,8 @@ export const de: Translations = {
     score: 'Punkte',
     proPromo: 'Keeper Pro für 10$',
     proPromoSubtitle: 'Einmalige Zahlung. Für immer nutzen. Einfach.',
+    boardTab: 'Spielfeld',
+    scoresTab: 'Punkte',
   },
 
   board: {

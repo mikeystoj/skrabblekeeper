@@ -64,6 +64,8 @@ export const en: Translations = {
     score: 'Score',
     proPromo: 'Get Keeper Pro for $10',
     proPromoSubtitle: 'One payment. Use forever. Simple.',
+    boardTab: 'Board',
+    scoresTab: 'Scores',
   },
 
   board: {
