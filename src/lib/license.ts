@@ -68,12 +68,16 @@ export async function validateLicenseKey(licenseKey: string): Promise<LicenseDat
 export async function getLicenseByEmail(email: string): Promise<string | null> {
   const supabase = getSupabase();
   
+  console.log('getLicenseByEmail called with:', email);
+  
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (supabase as any)
     .from('licenses')
     .select('license_key')
-    .eq('email', email)
+    .ilike('email', email) // Case-insensitive match
     .single();
+  
+  console.log('getLicenseByEmail result:', { data, error });
     
   if (error || !data) {
     return null;
