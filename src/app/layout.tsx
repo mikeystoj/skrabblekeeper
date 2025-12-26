@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { DM_Sans } from "next/font/google";
+import { Analytics } from "@vercel/analytics/react";
 import { GameProvider } from "@/context/GameContext";
 import { ProProvider } from "@/context/ProContext";
 import { LanguageProvider } from "@/context/LanguageContext";
@@ -78,10 +79,11 @@ export default function RootLayout({
         <LanguageProvider>
           <ProProvider>
             <GameProvider>
-        {children}
+              {children}
             </GameProvider>
           </ProProvider>
         </LanguageProvider>
+        <Analytics />
       </body>
     </html>
   );
