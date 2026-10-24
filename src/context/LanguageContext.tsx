@@ -19,8 +19,18 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
   // Load saved language or detect from browser
   useEffect(() => {
-    const savedLanguage = localStorage.getItem(STORAGE_KEY) as Language | null;
-    if (savedLanguage && SUPPORTED_LANGUAGES.some(l => l.code === savedLanguage)) {
+    const isSupported = (code: string | null): code is Language =>
+      !!code && SUPPORTED_LANGUAGES.some(l => l.code === code);
+
+    // Localized landing pages (/de, /fr, ...) open in that language without
+    // overwriting the visitor's saved preference
+    const pathLanguage = window.location.pathname.split('/')[1] || null;
+    const savedLanguage = localStorage.getItem(STORAGE_KEY);
+    if (isSupported(pathLanguage)) {
+      // Runs after hydration on purpose: window isn't available on the server
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setLanguageState(pathLanguage);
+    } else if (isSupported(savedLanguage)) {
       setLanguageState(savedLanguage);
     } else {
       const detected = detectBrowserLanguage();

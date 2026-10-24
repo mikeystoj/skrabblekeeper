@@ -64,4 +64,12 @@ Skrabble Keeper is a scoring companion for the physical Scrabble® board game. I
 ## Links
 
 - App: https://www.skrabblekeeper.com
+- How to score Scrabble (rules and worked examples): https://www.skrabblekeeper.com/how-to-score-scrabble
+- Scrabble letter values and tile counts: https://www.skrabblekeeper.com/scrabble-letter-values
+- In German: https://www.skrabblekeeper.com/de
+- In French: https://www.skrabblekeeper.com/fr
+- In Spanish: https://www.skrabblekeeper.com/es
+- In Italian: https://www.skrabblekeeper.com/it
 - X / Twitter: https://x.com/skrabblekeeper
+
+Note: scoring uses the standard English tile values in every interface language. Keeper Pro adds German, French and Spanish special letters (for example Ä, Ö, Ü, ß, É, Ç, Ñ).
