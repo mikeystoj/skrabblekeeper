@@ -66,6 +66,9 @@ export interface Translations {
     goesFirst: string;
     dragToReorder: string;
     savedPlayers: string;
+    tileSet: string;
+    tileSetHint: string;
+    spanishDigraphNote: string;
   };
 
   // Game Controls

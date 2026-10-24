@@ -46,6 +46,9 @@ export const fr: Translations = {
     goesFirst: '(commence)',
     dragToReorder: '(glisser pour réorganiser)',
     savedPlayers: 'Ajout rapide:',
+    tileSet: 'Jeu de lettres',
+    tileSetHint: 'Valeurs des lettres selon votre édition du Scrabble',
+    spanishDigraphNote: 'Les lettres doubles espagnoles CH, LL et RR ne sont pas encore prises en charge. Saisissez-les en deux lettres ; le mot comptera un peu moins qu\'avec les vraies tuiles.',
   },
 
   gameControls: {

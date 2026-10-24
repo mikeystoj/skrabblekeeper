@@ -5,6 +5,7 @@ import { useGame } from '@/context/GameContext';
 import { usePro } from '@/context/ProContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { MAX_PLAYERS } from '@/lib/constants';
+import { TILE_SETS, TILE_SET_IDS, TileSetId, isTileSetId } from '@/lib/tileSets';
 import {
   XMarkIcon,
   PlusIcon,
@@ -16,8 +17,11 @@ import { ProModal } from './ProModal';
 export function PlayerSetup() {
   const { state, dispatch } = useGame();
   const { isPro, settings, updateSettings } = usePro();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [newPlayerName, setNewPlayerName] = useState('');
+  // Until the player picks one, default to the edition matching the interface language
+  const [chosenTileSet, setChosenTileSet] = useState<TileSetId | null>(null);
+  const tileSet: TileSetId = chosenTileSet ?? state.tileSet ?? (isTileSetId(language) ? language : 'en');
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [showProModal, setShowProModal] = useState(false);
@@ -56,7 +60,7 @@ export function PlayerSetup() {
 
   const handleStartGame = () => {
     if (state.players.length >= 1) {
-      dispatch({ type: 'START_GAME' });
+      dispatch({ type: 'START_GAME', tileSet });
     }
   };
 
@@ -250,6 +254,31 @@ export function PlayerSetup() {
             ))}
           </div>
         )}
+
+        {/* Tile set (edition) */}
+        <div className="mb-4">
+          <p className="text-sm font-medium text-[#1e3a5f] mb-1.5">{t.playerSetup.tileSet}</p>
+          <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label={t.playerSetup.tileSet}>
+            {TILE_SET_IDS.map((id) => (
+              <button
+                key={id}
+                role="radio"
+                aria-checked={tileSet === id}
+                onClick={() => setChosenTileSet(id)}
+                className={`px-2.5 py-1.5 rounded-md text-sm border transition-colors ${
+                  tileSet === id
+                    ? 'bg-[#1e3a5f] border-[#1e3a5f] text-[#f5f0e8]'
+                    : 'bg-white border-[#d4c4a8] text-[#1e3a5f] hover:border-[#1e3a5f]'
+                }`}
+              >
+                <span aria-hidden>{TILE_SETS[id].flag}</span> {TILE_SETS[id].nativeName}
+              </button>
+            ))}
+          </div>
+          <p className="text-xs text-[#1e3a5f]/60 mt-1.5">
+            {tileSet === 'es' ? t.playerSetup.spanishDigraphNote : t.playerSetup.tileSetHint}
+          </p>
+        </div>
 
         {/* Start Game Button */}
         <button

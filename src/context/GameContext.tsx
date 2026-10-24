@@ -222,6 +222,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         ...state, 
         gameStarted: true,
         currentPlayerId: state.players[0]?.id || state.currentPlayerId,
+        tileSet: action.tileSet ?? state.tileSet,
       };
     }
 
@@ -274,6 +275,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         players: state.players.map(p => ({ ...p, score: 0, words: [] })),
         currentPlayerId: state.players[0]?.id || null,
         gameStarted: state.players.length > 0,
+        tileSet: state.tileSet,
       };
     }
 

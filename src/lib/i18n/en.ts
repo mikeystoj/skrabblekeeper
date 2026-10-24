@@ -46,6 +46,9 @@ export const en: Translations = {
     goesFirst: '(goes first)',
     dragToReorder: '(drag to reorder)',
     savedPlayers: 'Quick add:',
+    tileSet: 'Tile set',
+    tileSetHint: 'Letter values match your Scrabble edition',
+    spanishDigraphNote: 'CH, LL and RR double-letter tiles aren\'t supported yet. Type them as two letters; the word will score a little less than with the real tiles.',
   },
 
   gameControls: {
