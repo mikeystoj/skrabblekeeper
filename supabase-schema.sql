@@ -158,3 +158,37 @@ CREATE POLICY "Allow insert daily stats" ON daily_stats
 CREATE POLICY "Allow update daily stats" ON daily_stats
   FOR UPDATE USING (true);
 
+
+-- =============================================
+-- Weekly Stats Table (rolled up by /api/cron/weekly-stats)
+-- One row per week, weeks start on Monday (UTC)
+-- =============================================
+CREATE TABLE IF NOT EXISTS weekly_stats (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  week_start DATE UNIQUE NOT NULL,
+  games_played INTEGER DEFAULT 0,
+  words_played INTEGER DEFAULT 0,
+  points_scored BIGINT DEFAULT 0,
+  unique_players INTEGER DEFAULT 0,
+  active_days INTEGER DEFAULT 0,
+  pro_games_saved INTEGER DEFAULT 0, -- Rows in games table
+  new_licenses INTEGER DEFAULT 0,
+  total_licenses INTEGER DEFAULT 0, -- Snapshot at time of rollup
+  total_games_started INTEGER DEFAULT 0, -- Snapshot from global_stats
+  total_games_completed INTEGER DEFAULT 0, -- Snapshot from global_stats
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_weekly_stats_week_start ON weekly_stats(week_start DESC);
+
+ALTER TABLE weekly_stats ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Allow read weekly stats" ON weekly_stats
+  FOR SELECT USING (true);
+
+CREATE POLICY "Allow insert weekly stats" ON weekly_stats
+  FOR INSERT WITH CHECK (true);
+
+CREATE POLICY "Allow update weekly stats" ON weekly_stats
+  FOR UPDATE USING (true);
