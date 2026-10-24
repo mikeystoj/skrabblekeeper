@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSupabase } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/supabase';
+import { sendAdminEmail } from '@/lib/email';
 
 // Runs daily via Vercel Cron (see vercel.json). Each run recomputes the current
 // and previous week so the previous week is finalised after Sunday's games, and
@@ -20,7 +21,7 @@ function addDays(isoDate: string, days: number): string {
 }
 
 async function rollupWeek(start: string) {
-  const supabase = getSupabase();
+  const supabase = getSupabaseAdmin();
   const end = addDays(start, 7);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -61,6 +62,25 @@ async function rollupWeek(start: string) {
   return row;
 }
 
+type WeekRow = Awaited<ReturnType<typeof rollupWeek>>;
+
+// Summary of the week that just finished, sent on Mondays
+function sendWeeklySummary(week: WeekRow) {
+  const end = addDays(week.week_start, 6);
+  return sendAdminEmail(`Weekly stats ${week.week_start} to ${end}`, [
+    `Week of ${week.week_start} to ${end} (UTC)`,
+    '',
+    `Games played: ${week.games_played} (on ${week.active_days} of 7 days)`,
+    `Players: ${week.unique_players}`,
+    `Words played: ${week.words_played}`,
+    `Points scored: ${week.points_scored}`,
+    `Pro games saved: ${week.pro_games_saved}`,
+    `New Pro licenses: ${week.new_licenses}`,
+    '',
+    `All time: ${week.total_licenses} Pro licenses, ${week.total_games_started} games started, ${week.total_games_completed} completed`,
+  ]);
+}
+
 export async function GET(request: NextRequest) {
   const cronSecret = process.env.CRON_SECRET;
   if (!cronSecret || request.headers.get('authorization') !== `Bearer ${cronSecret}`) {
@@ -74,9 +94,17 @@ export async function GET(request: NextRequest) {
     const weeks = [await rollupWeek(lastWeek), await rollupWeek(thisWeek)];
     console.log('Weekly stats rolled up:', weeks);
 
+    if (new Date().getUTCDay() === 1) {
+      await sendWeeklySummary(weeks[0]);
+    }
+
     return NextResponse.json({ success: true, weeks });
   } catch (error) {
     console.error('Weekly stats rollup failed:', error);
+    await sendAdminEmail('Weekly stats job failed', [
+      'The daily stats job could not reach the database. Supabase may be paused or down.',
+      `Error: ${error instanceof Error ? error.message : JSON.stringify(error)}`,
+    ]);
     return NextResponse.json({ error: 'Failed to roll up weekly stats' }, { status: 500 });
   }
 }
