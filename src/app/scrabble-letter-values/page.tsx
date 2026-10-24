@@ -2,11 +2,25 @@ import type { Metadata } from 'next';
 import { ArticleShell } from '@/components/ArticleShell';
 import { FaqList, LetterValuesTable } from '@/components/SeoContent';
 import { buildFaqJsonLd, pageMetadata } from '@/lib/seo';
+import { TILE_SETS, TileSetId } from '@/lib/tileSets';
+
+// Letters grouped by points for one edition, e.g. "1: A E I ... · 2: D G"
+function valueGroups(id: TileSetId): [number, string[]][] {
+  const groups: Record<number, string[]> = {};
+  for (const letter of TILE_SETS[id].letters) {
+    (groups[TILE_SETS[id].values[letter]] ||= []).push(letter);
+  }
+  return Object.entries(groups)
+    .map(([points, letters]) => [Number(points), letters] as [number, string[]])
+    .sort((a, b) => a[0] - b[0]);
+}
+
+const OTHER_EDITIONS: TileSetId[] = ['de', 'fr', 'es', 'it'];
 
 const PATH = '/scrabble-letter-values';
 const TITLE = 'Scrabble Letter Values: Points for Every Tile';
 const DESCRIPTION =
-  'How many points is each letter worth in Scrabble? A complete chart of English Scrabble letter values and tile counts, with tips on scoring the high-value letters.';
+  'How many points is each letter worth in Scrabble? Letter values and tile counts for the English, German, French, Spanish and Italian editions, with tips on scoring the high-value letters.';
 
 // Standard English Scrabble tile distribution (100 tiles including 2 blanks)
 const TILE_COUNTS: [string, number][] = [
@@ -57,6 +71,33 @@ export default function LetterValuesPage() {
         {TILE_COUNTS.map(([letter, count]) => (
           <div key={letter} className="rounded-lg border border-[#1e3a5f]/15 bg-white/50 px-2 py-1.5 text-center">
             <span className="font-bold">{letter}</span> <span className="text-[#1e3a5f]/60">×{count}</span>
+          </div>
+        ))}
+      </div>
+
+      <h2>Letter values in other languages</h2>
+      <p>
+        Each language edition has its own letter values and tile counts. The board and the 50-point bingo are
+        the same everywhere. Skrabble Keeper scores with whichever edition you choose when you start a game.
+      </p>
+      <div className="space-y-3">
+        {OTHER_EDITIONS.map((id) => (
+          <div key={id} className="rounded-xl border border-[#1e3a5f]/15 bg-white/50 px-4 py-3">
+            <h3 className="font-bold">
+              <span aria-hidden>{TILE_SETS[id].flag}</span> {TILE_SETS[id].name} Scrabble ({TILE_SETS[id].nativeName})
+            </h3>
+            <ul className="mt-1 text-sm text-[#1e3a5f]/80 space-y-0.5">
+              {valueGroups(id).map(([points, letters]) => (
+                <li key={points}>
+                  <strong>{points} {points === 1 ? 'point' : 'points'}:</strong> {letters.join(', ')}
+                </li>
+              ))}
+            </ul>
+            {id === 'es' && (
+              <p className="mt-1 text-xs text-[#1e3a5f]/60">
+                The Spanish set also has CH (5), LL (8) and RR (8) double-letter tiles.
+              </p>
+            )}
           </div>
         ))}
       </div>
