@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { usePro } from '@/context/ProContext';
 import { useLanguage } from '@/context/LanguageContext';
+import { FlagIcon } from './FlagIcon';
 import {
   XMarkIcon,
   PlusIcon,
@@ -12,13 +13,11 @@ import {
 // Language configurations with custom letter sets
 export const LANGUAGE_CONFIGS: Record<string, {
   name: string;
-  flag: string;
   customLetters?: Record<string, { value: number; count: number }>;
 }> = {
-  en: { name: 'English', flag: '🇬🇧' },
+  en: { name: 'English' },
   de: { 
     name: 'German', 
-    flag: '🇩🇪',
     customLetters: {
       'Ä': { value: 6, count: 1 },
       'Ö': { value: 8, count: 1 },
@@ -28,7 +27,6 @@ export const LANGUAGE_CONFIGS: Record<string, {
   },
   fr: { 
     name: 'French', 
-    flag: '🇫🇷',
     customLetters: {
       'É': { value: 2, count: 2 },
       'È': { value: 4, count: 1 },
@@ -47,7 +45,6 @@ export const LANGUAGE_CONFIGS: Record<string, {
   },
   es: { 
     name: 'Spanish', 
-    flag: '🇪🇸',
     customLetters: {
       'Ñ': { value: 8, count: 1 },
       'Á': { value: 4, count: 1 },
@@ -298,7 +295,7 @@ export function ProSettings({ isOpen, onClose }: ProSettingsProps) {
                     onClick={() => toggleLanguage(code)}
                     className="flex items-center gap-3 flex-1 text-left"
                   >
-                    <span className="text-xl">{config.flag}</span>
+                    <FlagIcon code={code} className="w-6 h-4" />
                     <div>
                       <span className="font-medium text-[#1e3a5f]">{config.name}</span>
                       {config.customLetters && (

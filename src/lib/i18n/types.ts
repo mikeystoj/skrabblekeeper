@@ -5,15 +5,14 @@ export interface LanguageConfig {
   code: Language;
   name: string;
   nativeName: string;
-  flag: string;
 }
 
 export const SUPPORTED_LANGUAGES: LanguageConfig[] = [
-  { code: 'en', name: 'English', nativeName: 'English', flag: '🇬🇧' },
-  { code: 'de', name: 'German', nativeName: 'Deutsch', flag: '🇩🇪' },
-  { code: 'fr', name: 'French', nativeName: 'Français', flag: '🇫🇷' },
-  { code: 'es', name: 'Spanish', nativeName: 'Español', flag: '🇪🇸' },
-  { code: 'it', name: 'Italian', nativeName: 'Italiano', flag: '🇮🇹' },
+  { code: 'en', name: 'English', nativeName: 'English' },
+  { code: 'de', name: 'German', nativeName: 'Deutsch' },
+  { code: 'fr', name: 'French', nativeName: 'Français' },
+  { code: 'es', name: 'Spanish', nativeName: 'Español' },
+  { code: 'it', name: 'Italian', nativeName: 'Italiano' },
 ];
 
 // Translation schema

@@ -9,7 +9,6 @@ export interface TileSet {
   id: TileSetId;
   name: string; // English name, e.g. "German"
   nativeName: string; // e.g. "Deutsch"
-  flag: string;
   values: Record<string, number>;
   counts: Record<string, number>; // Excluding the 2 blanks every edition has
   letters: string[]; // Picker order
@@ -81,24 +80,24 @@ const italian = fromRows([
 
 export const TILE_SETS: Record<TileSetId, TileSet> = {
   en: {
-    id: 'en', name: 'English', nativeName: 'English', flag: '🇬🇧',
+    id: 'en', name: 'English', nativeName: 'English',
     values: LETTER_VALUES, counts: ENGLISH_COUNTS, letters: pickerOrder(LETTER_VALUES),
   },
   de: {
-    id: 'de', name: 'German', nativeName: 'Deutsch', flag: '🇩🇪',
+    id: 'de', name: 'German', nativeName: 'Deutsch',
     ...german, letters: pickerOrder(german.values),
   },
   fr: {
-    id: 'fr', name: 'French', nativeName: 'Français', flag: '🇫🇷',
+    id: 'fr', name: 'French', nativeName: 'Français',
     ...french, letters: pickerOrder(french.values),
   },
   es: {
-    id: 'es', name: 'Spanish', nativeName: 'Español', flag: '🇪🇸',
+    id: 'es', name: 'Spanish', nativeName: 'Español',
     // CH, LL and RR double-letter tiles aren't supported yet (see playerSetup.spanishDigraphNote)
     ...spanish, letters: pickerOrder(spanish.values),
   },
   it: {
-    id: 'it', name: 'Italian', nativeName: 'Italiano', flag: '🇮🇹',
+    id: 'it', name: 'Italian', nativeName: 'Italiano',
     ...italian, letters: pickerOrder(italian.values),
   },
 };

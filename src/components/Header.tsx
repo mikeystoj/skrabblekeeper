@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import { FlagIcon } from './FlagIcon';
 import { useState, useEffect, useRef } from 'react';
 import { useGame } from '@/context/GameContext';
 import { usePro } from '@/context/ProContext';
@@ -41,7 +42,7 @@ function MobileLanguageSelector({ onClose }: { onClose: () => void }) {
       >
         <LanguageIcon className="w-5 h-5 opacity-60" />
         <span className="flex-1">{currentLang?.nativeName}</span>
-        <span className="text-base">{currentLang?.flag}</span>
+        {currentLang && <FlagIcon code={currentLang.code} />}
       </button>
     );
   }
@@ -59,7 +60,7 @@ function MobileLanguageSelector({ onClose }: { onClose: () => void }) {
             flex items-center gap-3
             ${language === lang.code ? 'bg-[#e8dfd2] font-medium text-[#1e3a5f]' : 'text-[#1e3a5f]/80'}`}
         >
-          <span className="text-base">{lang.flag}</span>
+          <FlagIcon code={lang.code} />
           {lang.nativeName}
         </button>
       ))}
@@ -161,7 +162,7 @@ function LanguageDropdown() {
           hover:bg-[#e8dfd2] rounded-lg transition-all flex items-center gap-1"
         title="Language"
       >
-        <span className="text-base">{currentLang?.flag}</span>
+        {currentLang && <FlagIcon code={currentLang.code} />}
         <ChevronDownIcon className={`w-3 h-3 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
@@ -175,7 +176,7 @@ function LanguageDropdown() {
                 flex items-center gap-3 border-b border-[#e8dfd2] last:border-0
                 ${language === lang.code ? 'bg-[#e8dfd2] font-medium text-[#1e3a5f]' : 'text-[#1e3a5f]/80'}`}
             >
-              <span className="text-base">{lang.flag}</span>
+              <FlagIcon code={lang.code} />
               {lang.nativeName}
             </button>
           ))}

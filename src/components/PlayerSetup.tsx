@@ -13,6 +13,7 @@ import {
   SparklesIcon,
 } from '@heroicons/react/24/outline';
 import { ProModal } from './ProModal';
+import { FlagIcon } from './FlagIcon';
 
 export function PlayerSetup() {
   const { state, dispatch } = useGame();
@@ -265,13 +266,13 @@ export function PlayerSetup() {
                 role="radio"
                 aria-checked={tileSet === id}
                 onClick={() => setChosenTileSet(id)}
-                className={`px-2.5 py-1.5 rounded-md text-sm border transition-colors ${
+                className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-sm border transition-colors ${
                   tileSet === id
                     ? 'bg-[#1e3a5f] border-[#1e3a5f] text-[#f5f0e8]'
                     : 'bg-white border-[#d4c4a8] text-[#1e3a5f] hover:border-[#1e3a5f]'
                 }`}
               >
-                <span aria-hidden>{TILE_SETS[id].flag}</span> {TILE_SETS[id].nativeName}
+                <FlagIcon code={id} /> {TILE_SETS[id].nativeName}
               </button>
             ))}
           </div>

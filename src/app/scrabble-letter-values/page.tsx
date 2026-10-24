@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { ArticleShell } from '@/components/ArticleShell';
+import { FlagIcon } from '@/components/FlagIcon';
 import { FaqList, LetterValuesTable } from '@/components/SeoContent';
 import { buildFaqJsonLd, pageMetadata } from '@/lib/seo';
 import { TILE_SETS, TileSetId } from '@/lib/tileSets';
@@ -83,8 +84,8 @@ export default function LetterValuesPage() {
       <div className="space-y-3">
         {OTHER_EDITIONS.map((id) => (
           <div key={id} className="rounded-xl border border-[#1e3a5f]/15 bg-white/50 px-4 py-3">
-            <h3 className="font-bold">
-              <span aria-hidden>{TILE_SETS[id].flag}</span> {TILE_SETS[id].name} Scrabble ({TILE_SETS[id].nativeName})
+            <h3 className="font-bold flex items-center gap-2">
+              <FlagIcon code={id} /> {TILE_SETS[id].name} Scrabble ({TILE_SETS[id].nativeName})
             </h3>
             <ul className="mt-1 text-sm text-[#1e3a5f]/80 space-y-0.5">
               {valueGroups(id).map(([points, letters]) => (
