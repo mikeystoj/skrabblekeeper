@@ -61,7 +61,7 @@ export const FAQS: Faq[] = [
   },
   {
     question: 'Is Skrabble Keeper free?',
-    answer: `Yes. Score keeping, the interactive board and word history are free with no account needed. Keeper Pro is an optional one-time purchase of ${PRO_CURRENCY} $${PRO_PRICE} that adds dictionary word checking, game history and stats, word suggestions, extra language letter sets and a turn timer.`,
+    answer: `Yes. Score keeping, the interactive board and word history are free with no account needed. Keeper Pro is an optional one-time purchase of ${PRO_CURRENCY} $${PRO_PRICE} that adds dictionary word checking, game history and stats, word suggestions, extra letters you can mix into any game and a turn timer.`,
   },
   {
     question: 'How many players can Skrabble Keeper track?',
@@ -72,8 +72,8 @@ export const FAQS: Faq[] = [
     answer: 'Yes. It runs in any modern browser on iPhone, Android, tablets and computers. Add it to your home screen and it opens like an app. Your game is saved in your browser, so refreshing the page will not lose your scores.',
   },
   {
-    question: 'Can I use Skrabble Keeper with other languages?',
-    answer: 'The app is available in English, German, French, Spanish and Italian. Keeper Pro adds German, French and Spanish letter sets and dictionaries.',
+    question: 'Does Skrabble Keeper work with German, French, Spanish or Italian Scrabble?',
+    answer: "Yes. Choose English, German, French, Spanish or Italian tiles when you set up a game and Skrabble Keeper scores with that edition's official letter values. The app itself is also available in all five languages. Spanish CH, LL and RR double-letter tiles aren't supported yet.",
   },
 ];
 
@@ -137,6 +137,7 @@ export function buildJsonLd(content: LandingContent = EN_CONTENT) {
           'Interactive 15x15 board with premium squares',
           `Score tracking for up to ${MAX_PLAYERS} players`,
           `Automatic ${BINGO_BONUS}-point bingo bonus`,
+          'Official letter values for English, German, French, Spanish and Italian editions',
           'Word history per player',
           'Dictionary word checker (Pro)',
           'Game history and stats (Pro)',

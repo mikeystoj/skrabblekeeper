@@ -11,6 +11,7 @@ export interface ProSettings {
   timerEnabled: boolean;
   timerMinutes: number; // Default turn timer in minutes
   savedPlayers: string[]; // List of saved player names for quick selection
+  tileSet?: string; // Only on saved games: edition the game was scored with
 }
 
 export interface GameHistoryEntry {

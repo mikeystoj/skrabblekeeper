@@ -1,3 +1,4 @@
+import type { TileSetId } from './tileSets';
 import { MultiplierType } from './constants';
 
 // A single tile placed on the board
@@ -40,6 +41,7 @@ export interface GameState {
   pendingTiles: PlacedTile[];
   currentPlayerId: string | null;
   gameStarted: boolean;
+  tileSet?: TileSetId; // Letter values in use; missing on games saved before tile sets (English)
 }
 
 // Direction for word placement
@@ -59,7 +61,7 @@ export type GameAction =
   | { type: 'CLEAR_PENDING_TILES' }
   | { type: 'SUBMIT_WORD'; word: string; score: number; breakdown?: WordScore[] }
   | { type: 'UNDO_LAST_WORD' }
-  | { type: 'START_GAME' }
+  | { type: 'START_GAME'; tileSet?: TileSetId }
   | { type: 'NEW_GAME' }
   | { type: 'FULL_NEW_GAME' }
   | { type: 'LOAD_STATE'; state: GameState };

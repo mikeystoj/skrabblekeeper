@@ -18,7 +18,8 @@ interface ScoringResult {
  */
 export function calculateAllWordsScore(
   pendingTiles: PlacedTile[],
-  board: (PlacedTile | null)[][]
+  board: (PlacedTile | null)[][],
+  values: Record<string, number> = LETTER_VALUES
 ): ScoringResult {
   if (pendingTiles.length === 0) {
     return { totalScore: 0, words: [] };
@@ -103,7 +104,7 @@ export function calculateAllWordsScore(
     if (tiles.length < 2) return null;
 
     const word = tiles.map(t => t.letter.toUpperCase()).join('');
-    const score = calculateWordScoreWithContext(tiles);
+    const score = calculateWordScoreWithContext(tiles, values);
 
     return { word, score, tiles };
   };
@@ -155,7 +156,7 @@ export function calculateAllWordsScore(
       // Only count if it's actually a word (more than 1 letter)
       if (tiles.length >= 2) {
         const word = tiles.map(t => t.letter.toUpperCase()).join('');
-        const score = calculateWordScoreWithContext(tiles);
+        const score = calculateWordScoreWithContext(tiles, values);
         perpWords.push({ word, score, tiles });
       }
     }
@@ -184,22 +185,25 @@ export function calculateAllWordsScore(
   return { totalScore, words };
 }
 
-// Helper to check if a letter is a blank tile (lowercase = blank)
-const isBlankTile = (letter: string) => letter === letter.toLowerCase() && letter !== letter.toUpperCase();
+// Helper to check if a letter is a blank tile (lowercase = blank).
+// ß has no single-letter uppercase, so it is never treated as a blank.
+export const isBlankTile = (letter: string) =>
+  letter === letter.toLowerCase() && letter !== letter.toUpperCase() && letter.toUpperCase().length === 1;
 
 /**
  * Calculate score for a single word with context about which tiles are new
  * Multipliers only apply to newly placed tiles
  */
 function calculateWordScoreWithContext(
-  tiles: { letter: string; row: number; col: number; isNew: boolean }[]
+  tiles: { letter: string; row: number; col: number; isNew: boolean }[],
+  values: Record<string, number>
 ): number {
   let wordScore = 0;
   let wordMultiplier = 1;
 
   for (const tile of tiles) {
     // Blank tiles (lowercase letters) are worth 0 points
-    const letterValue = isBlankTile(tile.letter) ? 0 : (LETTER_VALUES[tile.letter.toUpperCase()] || 0);
+    const letterValue = getLetterValue(tile.letter, values);
     
     // Only apply multipliers to newly placed tiles
     if (tile.isNew) {
@@ -236,7 +240,10 @@ function calculateWordScoreWithContext(
 /**
  * Simple score calculation for just the pending tiles (legacy/backup)
  */
-export function calculateWordScore(tiles: PlacedTile[]): number {
+export function calculateWordScore(
+  tiles: PlacedTile[],
+  values: Record<string, number> = LETTER_VALUES
+): number {
   if (tiles.length === 0) return 0;
 
   let wordScore = 0;
@@ -244,7 +251,7 @@ export function calculateWordScore(tiles: PlacedTile[]): number {
 
   for (const tile of tiles) {
     // Blank tiles (lowercase letters) are worth 0 points
-    const letterValue = isBlankTile(tile.letter) ? 0 : (LETTER_VALUES[tile.letter.toUpperCase()] || 0);
+    const letterValue = getLetterValue(tile.letter, values);
     const multiplier = BOARD_LAYOUT[tile.row]?.[tile.col];
 
     switch (multiplier) {
@@ -297,7 +304,10 @@ export function getWordFromTiles(tiles: PlacedTile[]): string {
  * Get the point value for a single letter
  * Blank tiles (lowercase letters) are worth 0 points
  */
-export function getLetterValue(letter: string): number {
+export function getLetterValue(
+  letter: string,
+  values: Record<string, number> = LETTER_VALUES
+): number {
   if (isBlankTile(letter)) return 0;
-  return LETTER_VALUES[letter.toUpperCase()] || 0;
+  return values[letter] ?? values[letter.toUpperCase()] ?? 0;
 }

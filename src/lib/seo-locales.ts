@@ -1,8 +1,8 @@
 import { BINGO_BONUS, MAX_PLAYERS } from './constants';
 import { LandingContent, PRO_PRICE } from './seo';
 
-// Localized landing pages (/de, /fr, /es, /it). The app scores with the standard
-// English tile values; Pro adds each language's special letters, so the copy says so.
+// Localized landing pages (/de, /fr, /es, /it). Each game is scored with the tile
+// set (edition) chosen at setup, which defaults to the page's language.
 export const LOCALIZED_CONTENT = {
   de: {
     lang: 'de',
@@ -35,7 +35,7 @@ export const LOCALIZED_CONTENT = {
       },
       {
         question: 'Welche Buchstabenwerte verwendet die App?',
-        answer: 'Skrabble Keeper verwendet die Buchstabenwerte der englischen Standardausgabe. Mit Keeper Pro kommen die deutschen Sonderbuchstaben Ä, Ö, Ü und ß dazu.',
+        answer: 'Wähle beim Spielstart „Deutsch“ und Skrabble Keeper rechnet mit den offiziellen Werten der deutschen Ausgabe, inklusive Ä, Ö und Ü. Englische, französische, spanische und italienische Steine stehen ebenfalls zur Auswahl.',
       },
       {
         question: 'Ist Skrabble Keeper kostenlos?',
@@ -75,7 +75,7 @@ export const LOCALIZED_CONTENT = {
       },
       {
         question: "Quelle valeur des lettres l'application utilise-t-elle ?",
-        answer: "Skrabble Keeper utilise la valeur des lettres de l'édition anglaise standard. Keeper Pro ajoute les lettres accentuées françaises (É, È, À, Ç, Œ…).",
+        answer: "Choisissez « Français » au début de la partie et Skrabble Keeper utilise la valeur officielle des lettres de l'édition française (K, W, X, Y et Z à 10 points). Les éditions anglaise, allemande, espagnole et italienne sont aussi disponibles.",
       },
       {
         question: 'Skrabble Keeper est-il gratuit ?',
@@ -115,7 +115,7 @@ export const LOCALIZED_CONTENT = {
       },
       {
         question: '¿Qué valores de letras usa la app?',
-        answer: 'Skrabble Keeper usa los valores de la edición inglesa estándar. Keeper Pro añade las letras especiales del español (Ñ, Á, É, Í, Ó, Ú, Ü).',
+        answer: 'Elige «Español» al empezar la partida y Skrabble Keeper usa los valores oficiales de la edición española, incluida la Ñ. Las fichas dobles CH, LL y RR aún no son compatibles. También puedes elegir inglés, alemán, francés o italiano.',
       },
       {
         question: '¿Skrabble Keeper es gratis?',
@@ -155,7 +155,7 @@ export const LOCALIZED_CONTENT = {
       },
       {
         question: "Quali valori delle lettere usa l'app?",
-        answer: "Skrabble Keeper usa i valori delle lettere dell'edizione inglese standard. L'interfaccia è disponibile in italiano.",
+        answer: "Scegli «Italiano» all'inizio della partita e Skrabble Keeper usa i valori ufficiali dell'edizione italiana. Puoi scegliere anche le edizioni inglese, tedesca, francese e spagnola.",
       },
       {
         question: 'Skrabble Keeper è gratuito?',

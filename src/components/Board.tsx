@@ -4,7 +4,9 @@ import { useState, useMemo, useEffect } from 'react';
 import { useGame } from '@/context/GameContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { BoardSquare } from './BoardSquare';
-import { BOARD_SIZE, LETTER_VALUES, BOARD_LAYOUT, BINGO_BONUS } from '@/lib/constants';
+import { BOARD_SIZE, BOARD_LAYOUT, BINGO_BONUS } from '@/lib/constants';
+import { useLetterValues } from '@/hooks/useLetterValues';
+import { isBlankTile } from '@/lib/scoring';
 import { Direction, PlacedTile } from '@/lib/types';
 
 interface PreviewSquare {
@@ -90,6 +92,7 @@ function BingoConfetti({ onComplete, t }: { onComplete: () => void; t: { title: 
 export function Board() {
   const { state, dispatch } = useGame();
   const { t } = useLanguage();
+  const { getValue: getTileValue } = useLetterValues();
   const [selectedSquare, setSelectedSquare] = useState<{ row: number; col: number } | null>(null);
   const [previewWord, setPreviewWord] = useState('');
   const [previewDirection, setPreviewDirection] = useState<Direction>('horizontal');
@@ -166,9 +169,6 @@ export function Board() {
     setPreviewWord('');
     setPreviewDirection('horizontal');
   };
-
-  // Helper to check if a letter is a blank tile (lowercase = blank)
-  const isBlankTile = (letter: string) => letter === letter.toLowerCase() && letter !== letter.toUpperCase();
 
   // Calculate score for placed tiles including board multipliers and perpendicular words
   const calculatePlacedWordScore = (
@@ -287,7 +287,7 @@ export function Board() {
     let wordMultiplier = 1;
     
     for (const tile of newTiles) {
-      const letterValue = isBlankTile(tile.letter) ? 0 : (LETTER_VALUES[tile.letter.toUpperCase()] || 0);
+      const letterValue = getTileValue(tile.letter);
       
       if (tile.isNew) {
         const multiplier = BOARD_LAYOUT[tile.row]?.[tile.col];
@@ -371,7 +371,7 @@ export function Board() {
         let perpMultiplier = 1;
         
         for (const pTile of perpTiles) {
-          const letterValue = isBlankTile(pTile.letter) ? 0 : (LETTER_VALUES[pTile.letter.toUpperCase()] || 0);
+          const letterValue = getTileValue(pTile.letter);
           
           if (pTile.isNew) {
             const multiplier = BOARD_LAYOUT[pTile.row]?.[pTile.col];
@@ -588,7 +588,6 @@ function LetterPickerWithPreview({
 import { useState as useStateEnhanced, useEffect as useEffectEnhanced, useRef, useCallback, useMemo as useMemoEnhanced } from 'react';
 import { ALPHABET } from '@/lib/constants';
 import { usePro } from '@/context/ProContext';
-import { LANGUAGE_CONFIGS } from '@/components/ProSettings';
 
 interface LetterPickerEnhancedProps {
   startRow: number;
@@ -608,8 +607,6 @@ interface IntersectionInfo {
   matches: boolean;
 }
 
-// Helper to check if a letter is a blank (lowercase = blank tile)
-const isBlankTile = (letter: string) => letter === letter.toLowerCase() && letter !== letter.toUpperCase();
 
 function LetterPickerEnhanced({ 
   startRow, 
@@ -631,28 +628,8 @@ function LetterPickerEnhanced({
   // Word checker enabled check
   const wordCheckerEnabled = isPro && settings.wordChecker;
 
-  // Build custom letters from selected languages
-  const customLetters: Record<string, { value: number; count: number }> = useMemoEnhanced(() => {
-    const letters: Record<string, { value: number; count: number }> = {};
-    
-    if (isPro && settings.languages && settings.languages.length > 0) {
-      settings.languages.forEach(lang => {
-        const config = LANGUAGE_CONFIGS[lang];
-        if (config?.customLetters) {
-          Object.assign(letters, config.customLetters);
-        }
-      });
-    }
-    
-    // Also merge any directly stored custom letters from settings
-    if (isPro && settings.customLetters) {
-      Object.assign(letters, settings.customLetters);
-    }
-    
-    return letters;
-  }, [isPro, settings.languages, settings.customLetters]);
-  
-  const customLettersList = Object.keys(customLetters);
+  // Letters for this game's tile set, plus any Pro extra letters
+  const { baseLetters, extraLetters: customLettersList, getValue: getLetterValue } = useLetterValues();
   const hasCustomLetters = customLettersList.length > 0;
 
   // Check if the board is empty (first move)
@@ -852,7 +829,7 @@ function LetterPickerEnhanced({
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     // Valid characters (uppercase only for typing - blank tiles come from picker)
-    const validChars = new Set([...ALPHABET, ...customLettersList]);
+    const validChars = new Set([...ALPHABET, ...baseLetters, ...customLettersList]);
     const value = e.target.value;
     let filtered = '';
     
@@ -1014,15 +991,6 @@ function LetterPickerEnhanced({
     if (word.length > maxLength) {
       setWord(word.slice(0, maxLength));
     }
-  };
-
-  // Get letter value (check custom letters first, then standard)
-  const getLetterValue = (letter: string): number => {
-    const upperLetter = letter.toUpperCase();
-    if (customLetters[upperLetter]) {
-      return customLetters[upperLetter].value;
-    }
-    return LETTER_VALUES[upperLetter] || 0;
   };
 
   // Calculate score preview (only count NEW tiles, not existing ones)
@@ -1227,7 +1195,7 @@ function LetterPickerEnhanced({
         {/* Letter Grid */}
         <div className="mb-3">
           <div className="grid grid-cols-9 gap-1">
-            {ALPHABET.map((letter) => (
+            {baseLetters.map((letter) => (
               <button
                 key={letter}
                 onClick={() => handleLetterClick(letter)}
@@ -1240,7 +1208,7 @@ function LetterPickerEnhanced({
               >
                 {letter}
                 <span className="absolute bottom-0 right-0.5 text-[6px] opacity-50">
-                  {LETTER_VALUES[letter]}
+                  {getLetterValue(letter)}
                 </span>
               </button>
             ))}
@@ -1257,7 +1225,7 @@ function LetterPickerEnhanced({
               >
                 {letter}
                 <span className="absolute bottom-0 right-0.5 text-[6px] opacity-80">
-                  {customLetters[letter]?.value || 0}
+                  {getLetterValue(letter)}
                 </span>
               </button>
             ))}
@@ -1330,7 +1298,7 @@ function LetterPickerEnhanced({
                 Blank tiles are worth 0 points but can represent any letter.
               </p>
               <div className="grid grid-cols-9 gap-1">
-                {ALPHABET.map((letter) => (
+                {baseLetters.map((letter) => (
                   <button
                     key={letter}
                     onClick={() => handleBlankLetterSelect(letter)}

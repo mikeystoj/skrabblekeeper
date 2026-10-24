@@ -46,6 +46,9 @@ export const de: Translations = {
     goesFirst: '(beginnt)',
     dragToReorder: '(zum Sortieren ziehen)',
     savedPlayers: 'Schnell hinzufügen:',
+    tileSet: 'Spielsteine',
+    tileSetHint: 'Buchstabenwerte passend zu deiner Scrabble-Ausgabe',
+    spanishDigraphNote: 'Die spanischen Doppelbuchstaben CH, LL und RR werden noch nicht unterstützt. Gib sie als zwei Buchstaben ein; das Wort zählt dann etwas weniger als mit den echten Steinen.',
   },
 
   gameControls: {

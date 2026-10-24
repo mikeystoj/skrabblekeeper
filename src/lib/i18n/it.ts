@@ -46,6 +46,9 @@ export const it: Translations = {
     goesFirst: '(inizia)',
     dragToReorder: '(trascina per riordinare)',
     savedPlayers: 'Aggiungi rapido:',
+    tileSet: 'Set di lettere',
+    tileSetHint: 'Valori delle lettere secondo la tua edizione di Scrabble',
+    spanishDigraphNote: 'Le tessere doppie spagnole CH, LL e RR non sono ancora supportate. Inseriscile come due lettere; la parola varrà un po\' meno che con le tessere vere.',
   },
 
   gameControls: {

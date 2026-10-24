@@ -16,6 +16,7 @@ import {
   SparklesIcon,
 } from '@heroicons/react/24/outline';
 import { ProModal } from './ProModal';
+import { useLetterValues } from '@/hooks/useLetterValues';
 
 interface GameControlsProps {
   viewMode: ViewMode;
@@ -86,9 +87,10 @@ export function GameControls({ viewMode, onViewModeChange }: GameControlsProps) 
     return 'text-[#1e3a5f]';
   };
   
+  const { values: letterValues } = useLetterValues();
   const scoringResult = useMemo(() => {
-    return calculateAllWordsScore(state.pendingTiles, state.board);
-  }, [state.pendingTiles, state.board]);
+    return calculateAllWordsScore(state.pendingTiles, state.board, letterValues);
+  }, [state.pendingTiles, state.board, letterValues]);
 
   const canUndo = useMemo(() => {
     return state.players.some(p => p.words.length > 0);
@@ -224,7 +226,7 @@ export function GameControls({ viewMode, onViewModeChange }: GameControlsProps) 
         players: playersData,
         winner,
         totalTurns,
-        settings,
+        settings: { ...settings, tileSet: state.tileSet ?? 'en' },
         boardState,
       });
     }
