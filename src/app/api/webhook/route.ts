@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getStripe } from '@/lib/stripe';
-import { generateLicenseKey, storeLicenseKey } from '@/lib/license';
+import { generateLicenseKey, storeLicenseKey, getLicenseByPaymentId } from '@/lib/license';
 import { sendLicenseEmail } from '@/lib/email';
 import Stripe from 'stripe';
 
@@ -57,6 +57,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Stripe can deliver the same event more than once (retries, manual resends)
+    const paymentId = session.payment_intent as string;
+    try {
+      const existingKey = paymentId ? await getLicenseByPaymentId(paymentId) : null;
+      if (existingKey) {
+        console.log(`License already issued for payment ${paymentId}, skipping`);
+        return NextResponse.json({ received: true });
+      }
+    } catch (error) {
+      console.error('Failed to check for existing license:', error);
+      return NextResponse.json(
+        { error: 'Failed to check existing license' },
+        { status: 500 }
+      );
+    }
+
     // Generate license key
     const licenseKey = generateLicenseKey();
     console.log('Generated license key:', licenseKey);
@@ -66,7 +82,7 @@ export async function POST(request: NextRequest) {
       await storeLicenseKey(licenseKey, {
         email,
         createdAt: new Date().toISOString(),
-        stripePaymentId: session.payment_intent as string,
+        stripePaymentId: paymentId,
       });
       console.log('License stored in Supabase successfully');
     } catch (error) {

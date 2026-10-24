@@ -37,6 +37,27 @@ export async function storeLicenseKey(
   }
 }
 
+// Get the license key already issued for a Stripe payment (webhook retries)
+export async function getLicenseByPaymentId(stripePaymentId: string): Promise<string | null> {
+  const supabase = getSupabase();
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any)
+    .from('licenses')
+    .select('license_key')
+    .eq('stripe_payment_id', stripePaymentId)
+    .order('created_at', { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    console.error('Failed to look up license by payment:', error);
+    throw new Error('Failed to look up license');
+  }
+
+  return data?.license_key ?? null;
+}
+
 // Validate a license key
 export async function validateLicenseKey(licenseKey: string): Promise<LicenseData | null> {
   const supabase = getSupabase();
@@ -75,7 +96,9 @@ export async function getLicenseByEmail(email: string): Promise<string | null> {
     .from('licenses')
     .select('license_key')
     .ilike('email', email) // Case-insensitive match
-    .single();
+    .order('created_at', { ascending: true }) // Oldest first if duplicates exist
+    .limit(1)
+    .maybeSingle();
   
   console.log('getLicenseByEmail result:', { data, error });
     

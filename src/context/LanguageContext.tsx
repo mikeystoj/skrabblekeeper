@@ -16,7 +16,6 @@ const STORAGE_KEY = 'skrabble-language';
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [language, setLanguageState] = useState<Language>('en');
-  const [isInitialized, setIsInitialized] = useState(false);
 
   // Load saved language or detect from browser
   useEffect(() => {
@@ -27,7 +26,6 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
       const detected = detectBrowserLanguage();
       setLanguageState(detected);
     }
-    setIsInitialized(true);
   }, []);
 
   // Save language preference
@@ -38,11 +36,8 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
   const t = getTranslations(language);
 
-  // Don't render until initialized to prevent hydration mismatch
-  if (!isInitialized) {
-    return null;
-  }
-
+  // Render on the server too (in English) so crawlers get real HTML. The game UI
+  // waits for GameContext's isLoaded, by which point the saved language is applied.
   return (
     <LanguageContext.Provider value={{ 
       language, 
