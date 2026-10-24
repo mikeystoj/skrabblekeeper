@@ -63,21 +63,6 @@ export function ProProvider({ children }: { children: ReactNode }) {
   const [gameHistory, setGameHistory] = useState<GameHistoryEntry[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
 
-  // Load Pro status from localStorage on mount
-  useEffect(() => {
-    const storedKey = localStorage.getItem('skrabble_pro_license');
-    const storedEmail = localStorage.getItem('skrabble_pro_email');
-    
-    if (storedKey && storedEmail) {
-      setIsPro(true);
-      setLicenseKey(storedKey);
-      setLicenseEmail(storedEmail);
-      
-      // Load settings from Supabase
-      loadSettings(storedKey);
-    }
-  }, []);
-
   const loadSettings = async (key: string) => {
     try {
       const supabase = getSupabase();
@@ -95,6 +80,23 @@ export function ProProvider({ children }: { children: ReactNode }) {
       console.error('Failed to load settings:', error);
     }
   };
+
+  // Load Pro status from localStorage on mount
+  useEffect(() => {
+    const storedKey = localStorage.getItem('skrabble_pro_license');
+    const storedEmail = localStorage.getItem('skrabble_pro_email');
+    
+    if (storedKey && storedEmail) {
+      // Runs after hydration on purpose: localStorage isn't available on the server
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setIsPro(true);
+      setLicenseKey(storedKey);
+      setLicenseEmail(storedEmail);
+      
+      // Load settings from Supabase
+      loadSettings(storedKey);
+    }
+  }, []);
 
   const activatePro = (key: string, email: string) => {
     localStorage.setItem('skrabble_pro_license', key);
@@ -142,6 +144,48 @@ export function ProProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const loadGameHistory = useCallback(async () => {
+    if (!licenseKey) return;
+
+    setIsLoadingHistory(true);
+    try {
+      const supabase = getSupabase();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase as any)
+        .from('games')
+        .select('*')
+        .eq('license_key', licenseKey)
+        .order('played_at', { ascending: false })
+        .limit(50);
+
+      if (!error && data) {
+        const history: GameHistoryEntry[] = data.map((game: {
+          id: string;
+          played_at: string;
+          duration_minutes: number | null;
+          players: GameHistoryEntry['players'];
+          winner: string | null;
+          total_turns: number | null;
+          settings: ProSettings | null;
+          board_state: GameHistoryEntry['boardState'];
+        }) => ({
+          id: game.id,
+          playedAt: game.played_at,
+          durationMinutes: game.duration_minutes,
+          players: game.players,
+          winner: game.winner,
+          totalTurns: game.total_turns,
+          settings: game.settings,
+          boardState: game.board_state,
+        }));
+        setGameHistory(history);
+      }
+    } catch (error) {
+      console.error('Failed to load game history:', error);
+    }
+    setIsLoadingHistory(false);
+  }, [licenseKey]);
+
   const saveGame = async (gameData: Omit<GameHistoryEntry, 'id' | 'playedAt'>) => {
     // Always update global stats, even for non-Pro users
     try {
@@ -183,49 +227,6 @@ export function ProProvider({ children }: { children: ReactNode }) {
       console.error('Failed to save game:', error);
     }
   };
-
-  const loadGameHistory = useCallback(async () => {
-    if (!licenseKey) return;
-
-    setIsLoadingHistory(true);
-    try {
-      const supabase = getSupabase();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error } = await (supabase as any)
-        .from('games')
-        .select('*')
-        .eq('license_key', licenseKey)
-        .order('played_at', { ascending: false })
-        .limit(50);
-
-      if (!error && data) {
-        const history: GameHistoryEntry[] = data.map((game: {
-          id: string;
-          played_at: string;
-          duration_minutes: number | null;
-          players: GameHistoryEntry['players'];
-          winner: string | null;
-          total_turns: number | null;
-          settings: ProSettings | null;
-          board_state: GameHistoryEntry['boardState'];
-        }) => ({
-          id: game.id,
-          playedAt: game.played_at,
-          durationMinutes: game.duration_minutes,
-          players: game.players,
-          winner: game.winner,
-          totalTurns: game.total_turns,
-          settings: game.settings,
-          boardState: game.board_state,
-        }));
-        setGameHistory(history);
-      }
-    } catch (error) {
-      console.error('Failed to load game history:', error);
-    } finally {
-      setIsLoadingHistory(false);
-    }
-  }, [licenseKey]);
 
   return (
     <ProContext.Provider

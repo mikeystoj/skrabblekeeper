@@ -70,14 +70,9 @@ function MobileLanguageSelector({ onClose }: { onClose: () => void }) {
 // Install prompt modal for PWA
 function InstallPrompt({ onClose }: { onClose: () => void }) {
   const { t } = useLanguage();
-  const [isIOS, setIsIOS] = useState(false);
-  const [isAndroid, setIsAndroid] = useState(false);
-
-  useEffect(() => {
-    const ua = navigator.userAgent;
-    setIsIOS(/iPad|iPhone|iPod/.test(ua));
-    setIsAndroid(/Android/.test(ua));
-  }, []);
+  // Only rendered after a click, so navigator is always available
+  const [isIOS] = useState(() => /iPad|iPhone|iPod/.test(navigator.userAgent));
+  const [isAndroid] = useState(() => /Android/.test(navigator.userAgent));
 
   return (
     <div 
@@ -271,14 +266,14 @@ export function Header() {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
-  const [isStandalone, setIsStandalone] = useState(false);
-
-  useEffect(() => {
-    // Check if already installed as PWA
-    const isInStandaloneMode = window.matchMedia('(display-mode: standalone)').matches 
-      || (window.navigator as Navigator & { standalone?: boolean }).standalone === true;
-    setIsStandalone(isInStandaloneMode);
-  }, []);
+  // Check if already installed as PWA. Header only renders after the game has
+  // loaded on the client (see ScoreKeeperApp), so window is available.
+  const [isStandalone] = useState(() =>
+    typeof window !== 'undefined' && (
+      window.matchMedia('(display-mode: standalone)').matches
+      || (window.navigator as Navigator & { standalone?: boolean }).standalone === true
+    )
+  );
 
   const handleRestartSamePlayers = () => {
     dispatch({ type: 'NEW_GAME' });

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { usePro } from '@/context/ProContext';
 import { useLanguage } from '@/context/LanguageContext';
 import {
@@ -72,12 +72,18 @@ export function ProSettings({ isOpen, onClose }: ProSettingsProps) {
   const [localSettings, setLocalSettings] = useState(settings);
   const [newPlayerName, setNewPlayerName] = useState('');
 
-  // Sync localSettings when settings change or modal opens
-  useEffect(() => {
+  // Sync localSettings when settings change or the modal opens. Done during
+  // render (React's "adjust state when props change" pattern) instead of an effect.
+  const [syncedFrom, setSyncedFrom] = useState<{ isOpen: boolean; settings: typeof settings | null }>({
+    isOpen: false,
+    settings: null,
+  });
+  if (syncedFrom.isOpen !== isOpen || syncedFrom.settings !== settings) {
+    setSyncedFrom({ isOpen, settings });
     if (isOpen) {
       setLocalSettings(settings);
     }
-  }, [isOpen, settings]);
+  }
 
   if (!isOpen) return null;
 

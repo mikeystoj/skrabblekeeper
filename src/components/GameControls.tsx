@@ -5,7 +5,7 @@ import { usePro } from '@/context/ProContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { calculateAllWordsScore } from '@/lib/scoring';
 import { ViewMode } from '@/lib/types';
-import { useMemo, useState, useEffect, useCallback } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import {
   ClockIcon,
   PauseIcon,
@@ -42,41 +42,34 @@ export function GameControls({ viewMode, onViewModeChange }: GameControlsProps) 
 
   const currentPlayer = state.players.find(p => p.id === state.currentPlayerId);
 
-  // Reset timer when player changes
-  const resetTimer = useCallback(() => {
-    if (isPro && settings.timerEnabled && settings.timerMinutes > 0) {
+  // Reset the timer when the player or timer settings change. Done during render
+  // (React's "adjust state when props change" pattern) rather than in an effect.
+  const timerKey = `${state.currentPlayerId}|${isPro}|${settings.timerEnabled}|${settings.timerMinutes}`;
+  const [lastTimerKey, setLastTimerKey] = useState<string | null>(null);
+  if (timerKey !== lastTimerKey) {
+    setLastTimerKey(timerKey);
+    if (state.currentPlayerId && isPro && settings.timerEnabled && settings.timerMinutes > 0) {
       setTimeRemaining(settings.timerMinutes * 60);
       setIsTimerRunning(true);
       setTimerExpired(false);
     }
-  }, [isPro, settings.timerEnabled, settings.timerMinutes]);
+  }
 
-  // Start/reset timer when current player changes
+  // Timer countdown effect (re-runs every tick, so the closure sees the current time)
   useEffect(() => {
-    if (state.currentPlayerId && isPro && settings.timerEnabled) {
-      resetTimer();
-    }
-  }, [state.currentPlayerId, resetTimer, isPro, settings.timerEnabled]);
+    if (!isTimerRunning || timeRemaining === null || timeRemaining <= 0) return;
 
-  // Timer countdown effect
-  useEffect(() => {
-    if (!isTimerRunning || timeRemaining === null || timeRemaining <= 0) {
-      if (timeRemaining === 0 && !timerExpired) {
+    const interval = setInterval(() => {
+      const next = timeRemaining - 1;
+      setTimeRemaining(next);
+      if (next <= 0) {
         setTimerExpired(true);
         setIsTimerRunning(false);
       }
-      return;
-    }
-
-    const interval = setInterval(() => {
-      setTimeRemaining(prev => {
-        if (prev === null || prev <= 0) return 0;
-        return prev - 1;
-      });
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [isTimerRunning, timeRemaining, timerExpired]);
+  }, [isTimerRunning, timeRemaining]);
 
   // Format time for display
   const formatTime = (seconds: number): string => {
@@ -157,7 +150,7 @@ export function GameControls({ viewMode, onViewModeChange }: GameControlsProps) 
         word: wordDisplay,
         score: scoringResult.totalScore,
       });
-      // Timer will reset automatically via useEffect when currentPlayerId changes
+      // Timer resets automatically when currentPlayerId changes
     }
   };
 
@@ -174,7 +167,7 @@ export function GameControls({ viewMode, onViewModeChange }: GameControlsProps) 
       const currentIndex = state.players.findIndex(p => p.id === state.currentPlayerId);
       const nextIndex = (currentIndex + 1) % state.players.length;
       dispatch({ type: 'SET_CURRENT_PLAYER', playerId: state.players[nextIndex].id });
-      // Timer will reset automatically via useEffect when currentPlayerId changes
+      // Timer resets automatically when currentPlayerId changes
     }
   };
 
@@ -250,8 +243,8 @@ export function GameControls({ viewMode, onViewModeChange }: GameControlsProps) 
     return <span className="text-sm text-[#1e3a5f]/50">{index + 1}.</span>;
   };
 
-  // End Game Modal
-  const EndGameModal = () => {
+  // End Game Modal (render helper, not a component, so it isn't remounted each render)
+  const renderEndGameModal = () => {
     if (!showEndGameModal) return null;
 
     const sortedPlayers = [...state.players].sort((a, b) => b.score - a.score);
@@ -339,145 +332,10 @@ export function GameControls({ viewMode, onViewModeChange }: GameControlsProps) 
     );
   };
 
-  // Word Checker Modal (standalone, independent of board)
-  const WordCheckerModal = () => {
-    const [checkWord, setCheckWord] = useState('');
-    const [checkStatus, setCheckStatus] = useState<'idle' | 'checking' | 'valid' | 'invalid'>('idle');
-    const [checkError, setCheckError] = useState<string | null>(null);
-
-    if (!showWordChecker) return null;
-
-    const handleCheck = async () => {
-      if (checkWord.length < 2) return;
-      
-      setCheckStatus('checking');
-      setCheckError(null);
-      
-      try {
-        const response = await fetch(`/api/check-word?word=${encodeURIComponent(checkWord.toUpperCase())}`);
-        const data = await response.json();
-        
-        if (response.ok) {
-          setCheckStatus(data.isValid ? 'valid' : 'invalid');
-        } else {
-          setCheckError(data.error || 'Check failed');
-          setCheckStatus('idle');
-        }
-      } catch (error) {
-        console.error('Word check error:', error);
-        setCheckError('Network error');
-        setCheckStatus('idle');
-      }
-    };
-
-    const handleKeyDown = (e: React.KeyboardEvent) => {
-      if (e.key === 'Enter' && checkWord.length >= 2) {
-        handleCheck();
-      }
-    };
-
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const value = e.target.value.toUpperCase().replace(/[^A-Z]/g, '');
-      setCheckWord(value);
-      setCheckStatus('idle');
-    };
-
-    const handleClose = () => {
-      setShowWordChecker(false);
-      setCheckWord('');
-      setCheckStatus('idle');
-      setCheckError(null);
-    };
-
-    return (
-      <div 
-        className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4"
-        onClick={handleClose}
-      >
-        <div 
-          className="bg-[#faf8f5] rounded-xl shadow-xl max-w-sm w-full overflow-hidden"
-          onClick={e => e.stopPropagation()}
-        >
-          <div className="bg-[#1e3a5f] px-5 py-4">
-            <h2 className="text-lg font-bold text-[#f5f0e8] flex items-center gap-2">
-              <MagnifyingGlassIcon className="w-5 h-5" />
-              Word Checker
-            </h2>
-            <p className="text-[#f5f0e8]/70 text-sm">Check if a word is valid</p>
-          </div>
-
-          <div className="p-5">
-            <div className="flex gap-2 mb-3">
-              <input
-                type="text"
-                value={checkWord}
-                onChange={handleInputChange}
-                onKeyDown={handleKeyDown}
-                placeholder="Type a word..."
-                autoFocus
-                className={`flex-1 px-4 py-3 text-xl font-bold tracking-widest text-center
-                  border-2 rounded-lg focus:outline-none
-                  text-[#1e3a5f] bg-white uppercase
-                  ${checkStatus === 'valid' ? 'border-green-500 bg-green-50' : 
-                    checkStatus === 'invalid' ? 'border-red-400 bg-red-50' : 
-                    'border-[#d4c4a8] focus:border-[#1e3a5f]'}`}
-                maxLength={15}
-              />
-            </div>
-
-            {/* Result Display */}
-            {checkStatus === 'valid' && (
-              <div className="p-4 bg-green-100 border border-green-300 rounded-lg text-center mb-3">
-                <p className="text-green-700 font-bold text-lg">✓ Valid Word!</p>
-                <p className="text-green-600 text-sm">&quot;{checkWord}&quot; is in the dictionary</p>
-              </div>
-            )}
-            
-            {checkStatus === 'invalid' && (
-              <div className="p-4 bg-red-100 border border-red-300 rounded-lg text-center mb-3">
-                <p className="text-red-700 font-bold text-lg">✗ Not Found</p>
-                <p className="text-red-600 text-sm">&quot;{checkWord}&quot; is not in the dictionary</p>
-              </div>
-            )}
-
-            {checkError && (
-              <div className="p-3 bg-amber-100 border border-amber-300 rounded-lg text-center mb-3">
-                <p className="text-amber-700 text-sm">{checkError}</p>
-              </div>
-            )}
-
-            <p className="text-xs text-[#1e3a5f]/50 text-center mb-4">
-              This checker is independent of the board - use it to look up any word.
-            </p>
-          </div>
-
-          <div className="px-5 pb-5 space-y-2">
-            <button
-              onClick={handleCheck}
-              disabled={checkWord.length < 2 || checkStatus === 'checking'}
-              className="w-full py-2.5 px-4 bg-[#1e3a5f] hover:bg-[#162d4d] 
-                text-[#f5f0e8] font-bold rounded-lg transition-colors
-                disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {checkStatus === 'checking' ? 'Checking...' : 'Check Word'}
-            </button>
-            <button
-              onClick={handleClose}
-              className="w-full py-2 px-4 text-[#1e3a5f]/50 hover:text-[#1e3a5f] 
-                text-sm transition-colors"
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
   return (
     <>
-    <EndGameModal />
-    <WordCheckerModal />
+    {renderEndGameModal()}
+    {showWordChecker && <WordCheckerModal onClose={() => setShowWordChecker(false)} />}
     <ProModal isOpen={showProModal} onClose={() => setShowProModal(false)} />
     <div className="bg-[#faf8f5] rounded-lg shadow-md p-3 space-y-3">
       {/* View Toggle */}
@@ -723,5 +581,135 @@ export function GameControls({ viewMode, onViewModeChange }: GameControlsProps) 
       )}
     </div>
     </>
+  );
+}
+
+// Word Checker Modal (standalone, independent of board). Defined at module level
+// so its input state survives GameControls re-renders (e.g. the turn timer ticking).
+function WordCheckerModal({ onClose }: { onClose: () => void }) {
+  const [checkWord, setCheckWord] = useState('');
+  const [checkStatus, setCheckStatus] = useState<'idle' | 'checking' | 'valid' | 'invalid'>('idle');
+  const [checkError, setCheckError] = useState<string | null>(null);
+
+  const handleCheck = async () => {
+    if (checkWord.length < 2) return;
+    
+    setCheckStatus('checking');
+    setCheckError(null);
+    
+    try {
+      const response = await fetch(`/api/check-word?word=${encodeURIComponent(checkWord.toUpperCase())}`);
+      const data = await response.json();
+      
+      if (response.ok) {
+        setCheckStatus(data.isValid ? 'valid' : 'invalid');
+      } else {
+        setCheckError(data.error || 'Check failed');
+        setCheckStatus('idle');
+      }
+    } catch (error) {
+      console.error('Word check error:', error);
+      setCheckError('Network error');
+      setCheckStatus('idle');
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && checkWord.length >= 2) {
+      handleCheck();
+    }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.toUpperCase().replace(/[^A-Z]/g, '');
+    setCheckWord(value);
+    setCheckStatus('idle');
+  };
+
+  // State resets on its own because the modal unmounts when closed
+  const handleClose = onClose;
+
+  return (
+    <div 
+      className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4"
+      onClick={handleClose}
+    >
+      <div 
+        className="bg-[#faf8f5] rounded-xl shadow-xl max-w-sm w-full overflow-hidden"
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="bg-[#1e3a5f] px-5 py-4">
+          <h2 className="text-lg font-bold text-[#f5f0e8] flex items-center gap-2">
+            <MagnifyingGlassIcon className="w-5 h-5" />
+            Word Checker
+          </h2>
+          <p className="text-[#f5f0e8]/70 text-sm">Check if a word is valid</p>
+        </div>
+
+        <div className="p-5">
+          <div className="flex gap-2 mb-3">
+            <input
+              type="text"
+              value={checkWord}
+              onChange={handleInputChange}
+              onKeyDown={handleKeyDown}
+              placeholder="Type a word..."
+              autoFocus
+              className={`flex-1 px-4 py-3 text-xl font-bold tracking-widest text-center
+                border-2 rounded-lg focus:outline-none
+                text-[#1e3a5f] bg-white uppercase
+                ${checkStatus === 'valid' ? 'border-green-500 bg-green-50' : 
+                  checkStatus === 'invalid' ? 'border-red-400 bg-red-50' : 
+                  'border-[#d4c4a8] focus:border-[#1e3a5f]'}`}
+              maxLength={15}
+            />
+          </div>
+
+          {/* Result Display */}
+          {checkStatus === 'valid' && (
+            <div className="p-4 bg-green-100 border border-green-300 rounded-lg text-center mb-3">
+              <p className="text-green-700 font-bold text-lg">✓ Valid Word!</p>
+              <p className="text-green-600 text-sm">&quot;{checkWord}&quot; is in the dictionary</p>
+            </div>
+          )}
+          
+          {checkStatus === 'invalid' && (
+            <div className="p-4 bg-red-100 border border-red-300 rounded-lg text-center mb-3">
+              <p className="text-red-700 font-bold text-lg">✗ Not Found</p>
+              <p className="text-red-600 text-sm">&quot;{checkWord}&quot; is not in the dictionary</p>
+            </div>
+          )}
+
+          {checkError && (
+            <div className="p-3 bg-amber-100 border border-amber-300 rounded-lg text-center mb-3">
+              <p className="text-amber-700 text-sm">{checkError}</p>
+            </div>
+          )}
+
+          <p className="text-xs text-[#1e3a5f]/50 text-center mb-4">
+            This checker is independent of the board - use it to look up any word.
+          </p>
+        </div>
+
+        <div className="px-5 pb-5 space-y-2">
+          <button
+            onClick={handleCheck}
+            disabled={checkWord.length < 2 || checkStatus === 'checking'}
+            className="w-full py-2.5 px-4 bg-[#1e3a5f] hover:bg-[#162d4d] 
+              text-[#f5f0e8] font-bold rounded-lg transition-colors
+              disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {checkStatus === 'checking' ? 'Checking...' : 'Check Word'}
+          </button>
+          <button
+            onClick={handleClose}
+            className="w-full py-2 px-4 text-[#1e3a5f]/50 hover:text-[#1e3a5f] 
+              text-sm transition-colors"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }

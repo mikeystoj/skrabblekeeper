@@ -1,12 +1,14 @@
 'use client';
 
+import { useState } from 'react';
 import { useLanguage } from '@/context/LanguageContext';
 
 export function Footer() {
   const { t } = useLanguage();
 
-  // Pick a random phrase on each render (client-side only)
-  const randomPhrase = t.footer.funnyPhrases[Math.floor(Math.random() * t.footer.funnyPhrases.length)];
+  // Pick a random phrase once per mount (client-side only)
+  const [phraseSeed] = useState(() => Math.random());
+  const randomPhrase = t.footer.funnyPhrases[Math.floor(phraseSeed * t.footer.funnyPhrases.length)];
 
   return (
     <footer className="py-6 px-4 mt-8">

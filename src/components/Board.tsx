@@ -20,8 +20,8 @@ function BingoConfetti({ onComplete, t }: { onComplete: () => void; t: { title: 
     return () => clearTimeout(timer);
   }, [onComplete]);
 
-  // Generate confetti pieces
-  const confettiPieces = useMemo(() => {
+  // Generate confetti pieces once (lazy state initializer keeps render pure)
+  const [confettiPieces] = useState(() => {
     const pieces = [];
     const colors = ['#1e3a5f', '#c4a882', '#f5f0e8', '#3d5a80', '#e8dfd2', '#ffd700', '#ff6b6b', '#4ecdc4'];
     
@@ -34,10 +34,11 @@ function BingoConfetti({ onComplete, t }: { onComplete: () => void; t: { title: 
         color: colors[Math.floor(Math.random() * colors.length)],
         size: 6 + Math.random() * 8,
         rotation: Math.random() * 360,
+        round: Math.random() > 0.5,
       });
     }
     return pieces;
-  }, []);
+  });
 
   return (
     <div 
@@ -55,7 +56,7 @@ function BingoConfetti({ onComplete, t }: { onComplete: () => void; t: { title: 
             width: `${piece.size}px`,
             height: `${piece.size}px`,
             backgroundColor: piece.color,
-            borderRadius: Math.random() > 0.5 ? '50%' : '2px',
+            borderRadius: piece.round ? '50%' : '2px',
             transform: `rotate(${piece.rotation}deg)`,
             animationDelay: `${piece.delay}s`,
             animationDuration: `${piece.duration}s`,

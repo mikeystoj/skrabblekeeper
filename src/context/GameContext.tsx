@@ -1,7 +1,7 @@
 'use client';
 
-import React, { createContext, useContext, useReducer, useEffect, useCallback } from 'react';
-import { GameState, GameAction, Player, PlacedTile, PlayedWord, Direction } from '@/lib/types';
+import React, { createContext, useContext, useReducer, useEffect } from 'react';
+import { GameState, GameAction, Player, PlacedTile, PlayedWord } from '@/lib/types';
 import { BOARD_SIZE, STORAGE_KEY, MAX_PLAYERS } from '@/lib/constants';
 
 // Create empty board
@@ -318,6 +318,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.warn('Failed to load game state:', error);
     }
+    // Runs after hydration on purpose: localStorage isn't available on the server
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsLoaded(true);
   }, []);
 
