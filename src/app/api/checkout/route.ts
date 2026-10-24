@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
             product_data: {
               name: 'Skrabble Keeper Pro',
               description: 'Lifetime access to all Pro features',
-              images: ['https://skrabblekeeper.com/og-image.svg'],
+              images: ['https://www.skrabblekeeper.com/icon-512.png'],
             },
             unit_amount: PRICE_AMOUNT,
           },

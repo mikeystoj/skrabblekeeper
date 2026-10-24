@@ -10,20 +10,25 @@ import { GameControls } from '@/components/GameControls';
 import { Footer } from '@/components/Footer';
 import { ViewMode } from '@/lib/types';
 
-export default function Home() {
+// `children` is server-rendered content (About/FAQ) shown before a game starts.
+// It is also rendered in the loading state so it is in the initial HTML for crawlers.
+export function ScoreKeeperApp({ children }: { children?: React.ReactNode }) {
   const { state, isLoaded } = useGame();
   const [viewMode, setViewMode] = useState<ViewMode>('board');
 
   // Show loading state while hydrating from localStorage
   if (!isLoaded) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-10 h-10 border-3 border-[#1e3a5f] border-t-transparent 
-            rounded-full animate-spin mx-auto mb-3"></div>
-          <p className="text-[#1e3a5f]">Loading...</p>
+      <>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <div className="w-10 h-10 border-3 border-[#1e3a5f] border-t-transparent
+              rounded-full animate-spin mx-auto mb-3"></div>
+            <p className="text-[#1e3a5f]">Loading...</p>
+          </div>
         </div>
-      </div>
+        {children}
+      </>
     );
   }
 
@@ -35,6 +40,7 @@ export default function Home() {
         <main className="py-6 flex-1">
           <PlayerSetup />
         </main>
+        {children}
         <Footer />
       </div>
     );
