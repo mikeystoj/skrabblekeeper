@@ -11,14 +11,8 @@ CREATE TABLE IF NOT EXISTS licenses (
 -- Enable RLS for licenses
 ALTER TABLE licenses ENABLE ROW LEVEL SECURITY;
 
--- Policies for licenses table
--- Allow inserting new licenses (from webhook)
-CREATE POLICY "Allow insert licenses" ON licenses
-  FOR INSERT WITH CHECK (true);
-
--- Allow selecting licenses for validation
-CREATE POLICY "Allow select licenses" ON licenses
-  FOR SELECT USING (true);
+-- No policies on licenses: the public anon key can't read or write it.
+-- Server routes use the service role key (getSupabaseAdmin), which bypasses RLS.
 
 -- Index for faster lookups
 CREATE INDEX IF NOT EXISTS idx_licenses_license_key ON licenses(license_key);

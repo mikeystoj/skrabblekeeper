@@ -1,13 +1,9 @@
 'use client';
 
-import { BOARD_LAYOUT, MULTIPLIER_COLORS, LETTER_VALUES } from '@/lib/constants';
+import { BOARD_LAYOUT, MULTIPLIER_COLORS } from '@/lib/constants';
 import { PlacedTile } from '@/lib/types';
-import { usePro } from '@/context/ProContext';
-import { LANGUAGE_CONFIGS } from '@/components/ProSettings';
-import { useMemo } from 'react';
-
-// Helper to check if a letter is a blank tile (lowercase = blank)
-const isBlankTile = (letter: string) => letter === letter.toLowerCase() && letter !== letter.toUpperCase();
+import { useLetterValues } from '@/hooks/useLetterValues';
+import { isBlankTile } from '@/lib/scoring';
 
 interface BoardSquareProps {
   row: number;
@@ -30,7 +26,6 @@ export function BoardSquare({
   onClick, 
   isSelectable 
 }: BoardSquareProps) {
-  const { isPro, settings } = usePro();
   const multiplier = BOARD_LAYOUT[row][col];
   const colors = (multiplier && MULTIPLIER_COLORS[multiplier]) || MULTIPLIER_COLORS['default'];
   
@@ -41,34 +36,8 @@ export function BoardSquare({
   const tileIsBlank = displayTile ? isBlankTile(displayTile.letter) : false;
   const previewIsBlank = previewLetter ? isBlankTile(previewLetter) : false;
   
-  // Build custom letters from selected languages
-  const customLetters = useMemo(() => {
-    const letters: Record<string, { value: number; count: number }> = {};
-    
-    if (isPro && settings.languages && settings.languages.length > 0) {
-      settings.languages.forEach(lang => {
-        const config = LANGUAGE_CONFIGS[lang];
-        if (config?.customLetters) {
-          Object.assign(letters, config.customLetters);
-        }
-      });
-    }
-    
-    if (isPro && settings.customLetters) {
-      Object.assign(letters, settings.customLetters);
-    }
-    
-    return letters;
-  }, [isPro, settings.languages, settings.customLetters]);
-
-  // Get letter value (check custom letters first, then standard)
-  const getLetterValue = (letter: string): number => {
-    const upperLetter = letter.toUpperCase();
-    if (customLetters[upperLetter]) {
-      return customLetters[upperLetter].value;
-    }
-    return LETTER_VALUES[upperLetter] || 0;
-  };
+  // Value from this game's tile set (and any Pro extra letters)
+  const { getValue: getLetterValue } = useLetterValues();
   
   // Get letter value for display (blank tiles = 0)
   const letterValue = displayTile 

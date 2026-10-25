@@ -135,7 +135,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Check language settings
-    const languages = settings?.languages || ['en'];
+    // Pro extra letter sets, plus the edition (tile set) the game was scored with
+    const languages: string[] = [...(settings?.languages || ['en']), settings?.tileSet].filter(Boolean);
     const hasGerman = languages.includes('de');
     const hasFrench = languages.includes('fr');
     const hasSpanish = languages.includes('es');

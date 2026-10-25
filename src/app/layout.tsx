@@ -39,13 +39,9 @@ export const metadata: Metadata = {
   creator: SITE_NAME,
   publisher: SITE_NAME,
   category: "games",
-  alternates: {
-    canonical: "/",
-  },
   openGraph: {
     title: "Skrabble Keeper - Free Scrabble Score Keeper & Calculator",
     description: "Tap words onto an interactive Scrabble board and get the score instantly. Free for up to 4 players.",
-    url: "/",
     type: "website",
     locale: "en_US",
     siteName: SITE_NAME,

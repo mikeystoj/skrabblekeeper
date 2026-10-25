@@ -46,6 +46,9 @@ export const es: Translations = {
     goesFirst: '(empieza)',
     dragToReorder: '(arrastra para reordenar)',
     savedPlayers: 'Añadir rápido:',
+    tileSet: 'Fichas',
+    tileSetHint: 'Valores de las letras según tu edición de Scrabble',
+    spanishDigraphNote: 'Las fichas dobles CH, LL y RR aún no son compatibles. Escríbelas como dos letras; la palabra puntuará un poco menos que con las fichas reales.',
   },
 
   gameControls: {

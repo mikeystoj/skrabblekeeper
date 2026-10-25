@@ -100,6 +100,11 @@ export async function sendLicenseEmail(
     
     console.log('Email send result:', result);
 
+    // Resend returns errors instead of throwing
+    if (result.error) {
+      return { success: false, error: result.error.message };
+    }
+
     return { success: true };
   } catch (error) {
     console.error('Failed to send email:', error);
@@ -116,3 +121,47 @@ export async function sendLicenseEmail(
   }
 }
 
+// Plain notification to the site owner (ADMIN_EMAIL). Never throws, so it is
+// safe to call from error paths.
+export async function sendAdminEmail(
+  subject: string,
+  lines: string[]
+): Promise<{ success: boolean; error?: string }> {
+  const adminEmail = process.env.ADMIN_EMAIL;
+  if (!adminEmail) {
+    console.warn('ADMIN_EMAIL is not set, skipping admin email:', subject);
+    return { success: false, error: 'ADMIN_EMAIL is not set' };
+  }
+
+  try {
+    const resend = getResend();
+    const fromEmail = process.env.RESEND_FROM_EMAIL || 'Skrabble Keeper <noreply@mail.skrabblekeeper.com>';
+    const escape = (text: string) =>
+      text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+    const result = await resend.emails.send({
+      from: fromEmail,
+      to: adminEmail,
+      subject: `[Skrabble Keeper] ${subject}`,
+      text: lines.join('\n'),
+      html: `
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #1e3a5f; font-size: 14px; line-height: 1.6;">
+          ${lines.map((line) => `<p style="margin: 0 0 8px 0;">${escape(line) || '&nbsp;'}</p>`).join('')}
+        </div>
+      `,
+    });
+
+    if (result.error) {
+      console.error('Failed to send admin email:', result.error);
+      return { success: false, error: result.error.message };
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error('Failed to send admin email:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to send email',
+    };
+  }
+}

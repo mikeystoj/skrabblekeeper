@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-import { getSupabase } from './supabase';
+import { getSupabaseAdmin } from './supabase';
 
 export interface LicenseData {
   email: string;
@@ -19,7 +19,7 @@ export async function storeLicenseKey(
   licenseKey: string, 
   data: LicenseData
 ): Promise<void> {
-  const supabase = getSupabase();
+  const supabase = getSupabaseAdmin();
   
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error } = await (supabase as any)
@@ -39,7 +39,7 @@ export async function storeLicenseKey(
 
 // Get the license key already issued for a Stripe payment (webhook retries)
 export async function getLicenseByPaymentId(stripePaymentId: string): Promise<string | null> {
-  const supabase = getSupabase();
+  const supabase = getSupabaseAdmin();
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (supabase as any)
@@ -60,7 +60,7 @@ export async function getLicenseByPaymentId(stripePaymentId: string): Promise<st
 
 // Validate a license key
 export async function validateLicenseKey(licenseKey: string): Promise<LicenseData | null> {
-  const supabase = getSupabase();
+  const supabase = getSupabaseAdmin();
   
   console.log('Validating license key:', licenseKey);
   
@@ -87,7 +87,7 @@ export async function validateLicenseKey(licenseKey: string): Promise<LicenseDat
 
 // Get license key by email
 export async function getLicenseByEmail(email: string): Promise<string | null> {
-  const supabase = getSupabase();
+  const supabase = getSupabaseAdmin();
   
   console.log('getLicenseByEmail called with:', email);
   

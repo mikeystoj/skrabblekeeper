@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { LETTER_VALUES, BINGO_BONUS, MAX_PLAYERS } from './constants';
 import { PRICE_AMOUNT, CURRENCY } from './stripe';
 
@@ -24,7 +25,24 @@ const letterValuesSentence = LETTERS_BY_VALUE
   .map(([value, letters]) => `${letters.join(', ')} = ${value} point${value === 1 ? '' : 's'}`)
   .join('; ');
 
-export const FAQS: { question: string; answer: string }[] = [
+export type Faq = { question: string; answer: string };
+
+// Text for a landing page's server-rendered About/How-to/FAQ section
+export interface LandingContent {
+  lang: string;
+  path: string; // e.g. '/' or '/de'
+  title: string;
+  description: string;
+  heading: string;
+  intro: string;
+  howToHeading: string;
+  steps: string[];
+  faqHeading: string;
+  faqs: Faq[];
+  trademark: string;
+}
+
+export const FAQS: Faq[] = [
   {
     question: 'How do you keep score in Scrabble?',
     answer: `Add up the face value of every letter in each word you make, apply any premium squares the new tiles cover, and add the total to your running score. Skrabble Keeper does this for you: tap the first square, type the word, choose across or down, and the score is calculated and added to that player's total.`,
@@ -43,7 +61,7 @@ export const FAQS: { question: string; answer: string }[] = [
   },
   {
     question: 'Is Skrabble Keeper free?',
-    answer: `Yes. Score keeping, the interactive board and word history are free with no account needed. Keeper Pro is an optional one-time purchase of ${PRO_CURRENCY} $${PRO_PRICE} that adds dictionary word checking, game history and stats, word suggestions, extra language letter sets and a turn timer.`,
+    answer: `Yes. Score keeping, the interactive board and word history are free with no account needed. Keeper Pro is an optional one-time purchase of ${PRO_CURRENCY} $${PRO_PRICE} that adds dictionary word checking, game history and stats, word suggestions, extra letters you can mix into any game and a turn timer.`,
   },
   {
     question: 'How many players can Skrabble Keeper track?',
@@ -54,12 +72,33 @@ export const FAQS: { question: string; answer: string }[] = [
     answer: 'Yes. It runs in any modern browser on iPhone, Android, tablets and computers. Add it to your home screen and it opens like an app. Your game is saved in your browser, so refreshing the page will not lose your scores.',
   },
   {
-    question: 'Can I use Skrabble Keeper with other languages?',
-    answer: 'The app is available in English, German, French, Spanish and Italian. Keeper Pro adds German, French and Spanish letter sets and dictionaries.',
+    question: 'Does Skrabble Keeper work with German, French, Spanish or Italian Scrabble?',
+    answer: "Yes. Choose English, German, French, Spanish or Italian tiles when you set up a game and Skrabble Keeper scores with that edition's official letter values. The app itself is also available in all five languages. Spanish CH, LL and RR double-letter tiles aren't supported yet.",
   },
 ];
 
-export function buildJsonLd() {
+export const EN_CONTENT: LandingContent = {
+  lang: 'en',
+  path: '/',
+  title: 'Skrabble Keeper - Free Scrabble Score Keeper & Calculator',
+  description: SITE_DESCRIPTION,
+  heading: 'Free Scrabble Score Keeper & Calculator',
+  intro: `Skrabble Keeper is a free score keeper for your Scrabble® board game. Place each word on an interactive board and it adds up letter values, premium squares and the ${BINGO_BONUS}-point bingo for up to ${MAX_PLAYERS} players. No pen, no paper, no sign-up.`,
+  howToHeading: 'How to keep score with Skrabble Keeper',
+  steps: [
+    `Add up to ${MAX_PLAYERS} player names and start the game.`,
+    'Tap the square where the first letter of your word goes.',
+    'Type the word and choose across or down.',
+    'The score is calculated with every bonus square and added to your total.',
+    "Switch to the Scores view to see each player's words and running totals.",
+  ],
+  faqHeading: 'Frequently asked questions',
+  faqs: FAQS,
+  trademark: 'Scrabble® is a registered trademark of Hasbro, Inc. Skrabble Keeper is not affiliated with or endorsed by Hasbro.',
+};
+
+export function buildJsonLd(content: LandingContent = EN_CONTENT) {
+  const pageUrl = content.path === '/' ? SITE_URL : `${SITE_URL}${content.path}`;
   return {
     '@context': 'https://schema.org',
     '@graph': [
@@ -98,6 +137,7 @@ export function buildJsonLd() {
           'Interactive 15x15 board with premium squares',
           `Score tracking for up to ${MAX_PLAYERS} players`,
           `Automatic ${BINGO_BONUS}-point bingo bonus`,
+          'Official letter values for English, German, French, Spanish and Italian editions',
           'Word history per player',
           'Dictionary word checker (Pro)',
           'Game history and stats (Pro)',
@@ -120,13 +160,66 @@ export function buildJsonLd() {
       },
       {
         '@type': 'FAQPage',
-        '@id': `${SITE_URL}/#faq`,
-        mainEntity: FAQS.map((faq) => ({
+        '@id': `${pageUrl}#faq`,
+        url: pageUrl,
+        inLanguage: content.lang,
+        mainEntity: content.faqs.map((faq) => ({
           '@type': 'Question',
           name: faq.question,
           acceptedAnswer: { '@type': 'Answer', text: faq.answer },
         })),
       },
     ],
+  };
+}
+
+// Full per-page metadata. Next.js replaces (does not merge) a layout's
+// openGraph/twitter objects, so every page sets them completely.
+export function pageMetadata({
+  path,
+  title,
+  description,
+  locale = 'en_US',
+  languages,
+}: {
+  path: string;
+  title: string;
+  description: string;
+  locale?: string;
+  languages?: Record<string, string>;
+}): Metadata {
+  return {
+    title: { absolute: title },
+    description,
+    alternates: { canonical: path, ...(languages && { languages }) },
+    openGraph: {
+      title,
+      description,
+      url: path,
+      type: 'website',
+      locale,
+      siteName: SITE_NAME,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      site: '@skrabblekeeper',
+      creator: '@skrabblekeeper',
+      title,
+      description,
+    },
+  };
+}
+
+// FAQPage structured data for a standalone page
+export function buildFaqJsonLd(path: string, faqs: Faq[]) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    url: `${SITE_URL}${path}`,
+    mainEntity: faqs.map((faq) => ({
+      '@type': 'Question',
+      name: faq.question,
+      acceptedAnswer: { '@type': 'Answer', text: faq.answer },
+    })),
   };
 }

@@ -37,6 +37,14 @@ export async function POST(request: NextRequest) {
       metadata: {
         email,
       },
+      // Abandoned checkout recovery: Stripe emails a link back to checkout when the
+      // session expires (needs "recovery emails" enabled in Stripe Dashboard > Settings > Checkout)
+      after_expiration: {
+        recovery: { enabled: true },
+      },
+      consent_collection: {
+        promotions: 'auto',
+      },
     });
 
     return NextResponse.json({ url: session.url });

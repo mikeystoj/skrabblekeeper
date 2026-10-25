@@ -1,10 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getStripe } from '@/lib/stripe';
 import { generateLicenseKey, storeLicenseKey, getLicenseByPaymentId } from '@/lib/license';
-import { sendLicenseEmail } from '@/lib/email';
+import { sendLicenseEmail, sendAdminEmail } from '@/lib/email';
 import Stripe from 'stripe';
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+// Tell the owner a paid customer did not get their license. Stripe retries
+// failed deliveries for up to 3 days, so this can repeat until it is fixed.
+function alertLicenseFailure(problem: string, session: Stripe.Checkout.Session, error: unknown) {
+  return sendAdminEmail(`License problem: ${problem}`, [
+    `A paid checkout could not be completed: ${problem}.`,
+    `Customer: ${session.customer_email || session.metadata?.email || 'unknown'}`,
+    `Checkout session: ${session.id}`,
+    `Payment: ${session.payment_intent || 'unknown'}`,
+    `Error: ${error instanceof Error ? error.message : String(error)}`,
+    '',
+    'Stripe will retry the webhook automatically. Check Supabase and the Vercel logs.',
+  ]);
+}
 
 export async function POST(request: NextRequest) {
   console.log('Webhook received');
@@ -51,6 +65,7 @@ export async function POST(request: NextRequest) {
     
     if (!email) {
       console.error('No email found in session');
+      await alertLicenseFailure('no customer email on the session', session, 'Missing email');
       return NextResponse.json(
         { error: 'No email found' },
         { status: 400 }
@@ -67,6 +82,7 @@ export async function POST(request: NextRequest) {
       }
     } catch (error) {
       console.error('Failed to check for existing license:', error);
+      await alertLicenseFailure('could not read the licenses table', session, error);
       return NextResponse.json(
         { error: 'Failed to check existing license' },
         { status: 500 }
@@ -87,6 +103,7 @@ export async function POST(request: NextRequest) {
       console.log('License stored in Supabase successfully');
     } catch (error) {
       console.error('Failed to store license in Supabase:', error);
+      await alertLicenseFailure('could not save the license', session, error);
       return NextResponse.json(
         { error: 'Failed to store license' },
         { status: 500 }
@@ -99,11 +116,13 @@ export async function POST(request: NextRequest) {
       
       if (!emailResult.success) {
         console.error('Failed to send license email:', emailResult.error);
+        await alertLicenseFailure(`license ${licenseKey} saved but the email failed`, session, emailResult.error);
       } else {
         console.log('License email sent successfully');
       }
     } catch (error) {
       console.error('Email sending threw error:', error);
+      await alertLicenseFailure(`license ${licenseKey} saved but the email failed`, session, error);
     }
 
     console.log(`License key generated for ${email}: ${licenseKey}`);

@@ -21,6 +21,7 @@ Skrabble Keeper is a scoring companion for the physical Scrabble® board game. I
 - Pass turn and undo
 - Game is saved in the browser, so refreshing the page keeps the scores
 - Can be added to the home screen and used like an app
+- Official letter values for English, German, French, Spanish and Italian Scrabble editions, chosen per game (Spanish CH, LL and RR double-letter tiles not yet supported)
 - Interface in English, German, French, Spanish and Italian
 - No account or sign-up required
 
@@ -30,7 +31,7 @@ Skrabble Keeper is a scoring companion for the physical Scrabble® board game. I
 - Game history and personal stats
 - Word helper suggestions
 - Word lookup and point calculator
-- German, French and Spanish letter sets
+- Extra letters from other languages that can be mixed into any game
 - Turn timer for competitive play
 - Use on up to 5 devices per license
 
@@ -42,7 +43,7 @@ Skrabble Keeper is a scoring companion for the physical Scrabble® board game. I
 4. The score is calculated and added to the current player
 5. Open the Scores view to see each player's words and totals
 
-## Scrabble letter values (English)
+## Scrabble letter values (English edition)
 
 - 1 point: A, E, I, L, N, O, R, S, T, U
 - 2 points: D, G
@@ -64,4 +65,10 @@ Skrabble Keeper is a scoring companion for the physical Scrabble® board game. I
 ## Links
 
 - App: https://www.skrabblekeeper.com
+- How to score Scrabble (rules and worked examples): https://www.skrabblekeeper.com/how-to-score-scrabble
+- Scrabble letter values and tile counts: https://www.skrabblekeeper.com/scrabble-letter-values
+- In German: https://www.skrabblekeeper.com/de
+- In French: https://www.skrabblekeeper.com/fr
+- In Spanish: https://www.skrabblekeeper.com/es
+- In Italian: https://www.skrabblekeeper.com/it
 - X / Twitter: https://x.com/skrabblekeeper
