@@ -1,0 +1,16 @@
+name: IndexNow
+
+# Vercel reports each deployment to GitHub. When a production deploy
+# succeeds, ask the site to submit its sitemap URLs to IndexNow (Bing).
+on:
+  deployment_status:
+
+jobs:
+  submit:
+    if: github.event.deployment_status.state == 'success' && github.event.deployment.environment == 'Production'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Submit sitemap URLs to IndexNow
+        run: |
+          curl -fsS -X POST https://www.skrabblekeeper.com/api/indexnow \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
