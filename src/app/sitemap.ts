@@ -9,8 +9,12 @@ const languages = Object.fromEntries(
   Object.entries(LANGUAGE_ALTERNATES).map(([lang, path]) => [lang, absolute(path)])
 );
 
+// Bump when page content changes. A build-time date would change on every
+// deploy, which teaches search engines to ignore lastmod.
+const LAST_UPDATED = new Date('2026-10-25');
+
 export default function sitemap(): MetadataRoute.Sitemap {
-  const lastModified = new Date();
+  const lastModified = LAST_UPDATED;
 
   const landingPages = Object.entries(LANGUAGE_ALTERNATES)
     .filter(([lang]) => lang !== 'x-default')
